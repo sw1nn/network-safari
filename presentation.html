@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>Networks for developing</title>
+<meta name="author" content="Neale Swinnerton"/>
+<meta name="description" content=""/>
+<meta name="keywords" content=""/>
+<style type="text/css">
+.underline { text-decoration: underline; }
+</style>
+<link rel="stylesheet" href="./reveal.js/dist/reveal.css"/>
+
+<link rel="stylesheet" href="./reveal.js/dist/theme/solarized.css" id="theme"/>
+
+<link rel="stylesheet" href="./presentation.css"/>
+<link rel="stylesheet" href="./reveal.js/plugin/highlight/zenburn.css"/>
+<!-- If the query includes 'print-pdf', include the PDF print sheet -->
+<script>
+    if( window.location.search.match( /print-pdf/gi ) ) {
+        var link = document.createElement( 'link' );
+        link.rel = 'stylesheet';
+        link.type = 'text/css';
+        link.href = './reveal.js/css/print/pdf.css';
+        document.getElementsByTagName( 'head' )[0].appendChild( link );
+    }
+</script>
+</head>
+<body>
+<div class="reveal">
+<div class="slides">
+<section id="sec-title-slide" data-background="./img/title2-darker.png"><h1 class="title">Networks for developing</h1><p class="subtitle">Putting the <b>works</b> into networks</p>
+<h2 class="author">Neale Swinnerton</h2><h2 class="date">2023-01-18</h2>
+</section>
+<section id="sec-table-of-contents" data-background="./img/agenda.png" data-background-size="800px" data-background-position="right" data-background-opacity="0.2"><div id="table-of-contents" role="doc-toc">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents" role="doc-toc">
+<ul>
+<li><a href="#/slide-org78686c2">Prerequisites</a></li>
+<li><a href="#/slide-orge232750">Terminology</a></li>
+<li><a href="#/slide-org74d3d08">Why is it DNS?</a></li>
+<li><a href="#/slide-org6f10e63">graph</a></li>
+<li><a href="#/slide-orgd684f4a">iptables et al.</a></li>
+<li><a href="#/slide-org43f9bed">Packet Capture FTW</a></li>
+<li><a href="#/slide-org0d06378">Cloud</a></li>
+</ul>
+</div>
+</div>
+</section>
+
+<section>
+<section id="slide-org78686c2" data-background-position="right" data-background-opacity="0.2">
+<h2 id="org78686c2">Prerequisites</h2>
+<ul>
+<li><code>net-tools</code> package ( <code>ifconfig(8)</code>, <code>route(8)</code>, <code>arp(8)</code> and <code>netstat(1)</code> et al.) has been deprecated for over 10 years.</li>
+<li>prefer <code>iproute2</code> package. All functions of net-tools and more are available.</li>
+<li>Standardised interface and output. Also <code>--json</code> option makes parsing nicer.</li>
+
+</ul>
+
+</section>
+</section>
+<section>
+<section id="slide-orge232750" data-background="./img/terminology.jpg" data-background-size="800px" data-background-position="right" data-background-opacity="0.2">
+<h2 id="orge232750">Terminology</h2>
+<ul>
+<li><p>
+<code>ip link</code>
+</p>
+<div class="r-stack ip_link" id="orgb6763ee">
+<div class="org-src-container">
+
+<pre  class="fragment fade-in-then-out" data-fragment-index="1"  ><code class="dns" >1: lo: &lt;LOOPBACK,UP,LOWER_UP&gt; mtu 65536 qdisc noqueue state UNKNOWN mode DEFAULT group default qlen 1000
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+2: wg0: &lt;POINTOPOINT,NOARP&gt; mtu 1420 qdisc noop state DOWN mode DEFAULT group default qlen 1000
+    link/none
+3: enp88s0: &lt;NO-CARRIER,BROADCAST,MULTICAST,UP&gt; mtu 1500 qdisc mq state DOWN mode DEFAULT group default qlen 1000
+    link/ether 48:21:0b:36:d3:08 brd ff:ff:ff:ff:ff:ff
+4: wlo1: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc noqueue state UP mode DORMANT group default qlen 1000
+    link/ether 84:7b:57:20:f9:54 brd ff:ff:ff:ff:ff:ff
+    altname wlp0s20f3
+5: tun0: &lt;POINTOPOINT,MULTICAST,NOARP,UP,LOWER_UP&gt; mtu 1500 qdisc fq_codel state UNKNOWN mode DEFAULT group default qlen 500
+    link/none
+</code></pre>
+</div>
+
+<div class="org-src-container">
+
+<pre  class="fragment appear" data-fragment-index="2" id="with_docker" ><code class="routeros" >1: lo: &lt;LOOPBACK,UP,LOWER_UP&gt; mtu 65536 qdisc noqueue state UNKNOWN mode DEFAULT group default qlen 1000
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+2: wg0: &lt;POINTOPOINT,NOARP&gt; mtu 1420 qdisc noop state DOWN mode DEFAULT group default qlen 1000
+    link/none
+3: enp88s0: &lt;NO-CARRIER,BROADCAST,MULTICAST,UP&gt; mtu 1500 qdisc mq state DOWN mode DEFAULT group default qlen 1000
+    link/ether 48:21:0b:36:d3:08 brd ff:ff:ff:ff:ff:ff
+4: wlo1: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc noqueue state UP mode DORMANT group default qlen 1000
+    link/ether 84:7b:57:20:f9:54 brd ff:ff:ff:ff:ff:ff
+    altname wlp0s20f3
+5: tun0: &lt;POINTOPOINT,MULTICAST,NOARP,UP,LOWER_UP&gt; mtu 1500 qdisc fq_codel state UNKNOWN mode DEFAULT group default qlen 500
+    link/none
+6: br-838b7f23bb93: &lt;NO-CARRIER,BROADCAST,MULTICAST,UP&gt; mtu 1500 qdisc noqueue state DOWN mode DEFAULT group default
+    link/ether 02:42:82:04:a9:90 brd ff:ff:ff:ff:ff:ff
+7: br-88ded7088275: &lt;NO-CARRIER,BROADCAST,MULTICAST,UP&gt; mtu 1500 qdisc noqueue state DOWN mode DEFAULT group default
+    link/ether 02:42:66:71:f3:b8 brd ff:ff:ff:ff:ff:ff
+8: docker0: &lt;NO-CARRIER,BROADCAST,MULTICAST,UP&gt; mtu 1500 qdisc noqueue state DOWN mode DEFAULT group default
+    link/ether 02:42:38:a1:bf:e9 brd ff:ff:ff:ff:ff:ff
+</code></pre>
+</div>
+
+</div></li>
+
+</ul>
+
+</section>
+<section id="slide-orge232750-split" data-background="./img/terminology.jpg" data-background-size="800px" data-background-position="right" data-background-opacity="0.2">
+
+<h2>Terminology</h2>
+<ul>
+<li><p>
+ip addr show [devname]
+</p>
+<div class="r-stack ip_addr" id="org3b19942">
+<div class="org-src-container">
+
+<pre  class="fragment fade-in-then-out" data-fragment-index="1"  ><code class="routeros" >4: wlo1: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc noqueue state UP group default qlen 1000
+    link/ether 84:7b:57:20:f9:54 brd ff:ff:ff:ff:ff:ff
+    altname wlp0s20f3
+    inet 192.168.1.177/24 metric 1024 brd 192.168.1.255 scope global dynamic wlo1
+       valid_lft 79772sec preferred_lft 79772sec
+    inet6 2a00:23c7:621c:f201:867b:57ff:fe20:f954/64 scope global dynamic mngtmpaddr noprefixroute 
+       valid_lft 295sec preferred_lft 115sec
+    inet6 fe80::867b:57ff:fe20:f954/64 scope link 
+       valid_lft forever preferred_lft forever
+</code></pre>
+</div>
+
+<div class="org-src-container">
+
+<pre  class="fragment fade-in-then-out" data-fragment-index="2"  ><code class="routeros" >10: tun0: &lt;POINTOPOINT,MULTICAST,NOARP,UP,LOWER_UP&gt; mtu 1500 qdisc fq_codel state UNKNOWN group default qlen 500
+    link/none 
+    inet 172.16.146.85/26 brd 172.16.146.127 scope global tun0
+       valid_lft forever preferred_lft forever
+    inet6 fe80::27c6:6c2c:e4ed:c888/64 scope link stable-privacy 
+       valid_lft forever preferred_lft forever
+</code></pre>
+</div>
+
+<div class="org-src-container">
+
+<pre  class="fragment appear" data-fragment-index="3"  ><code class="routeros" >2: wg0: &lt;POINTOPOINT,NOARP,UP,LOWER_UP&gt; mtu 1420 qdisc noqueue state UNKNOWN group default qlen 1000
+    link/none 
+    inet 10.9.0.7/24 metric 512 scope global wg0
+       valid_lft forever preferred_lft forever
+</code></pre>
+</div>
+
+</div></li>
+
+</ul>
+
+</section>
+<section id="slide-orge232750-split" data-background="./img/terminology.jpg" data-background-size="800px" data-background-position="right" data-background-opacity="0.2">
+
+<h2>Terminology</h2>
+<ul>
+<li>protocols</li>
+
+</ul>
+</section>
+<section id="slide-orge232750-split" data-background="./img/terminology.jpg" data-background-size="800px" data-background-position="right" data-background-opacity="0.2">
+
+<h2>Terminology</h2>
+<ul>
+<li>routes</li>
+
+</ul>
+</section>
+<section id="slide-orge232750-split" data-background="./img/terminology.jpg" data-background-size="800px" data-background-position="right" data-background-opacity="0.2">
+
+<h2>Terminology</h2>
+<ul>
+<li>bridges</li>
+
+</ul>
+</section>
+<section id="slide-orge232750-split" data-background="./img/terminology.jpg" data-background-size="800px" data-background-position="right" data-background-opacity="0.2">
+
+<h2>Terminology</h2>
+<ul>
+<li>tun devices</li>
+
+</ul>
+</section>
+<section id="slide-orge232750-split" data-background="./img/terminology.jpg" data-background-size="800px" data-background-position="right" data-background-opacity="0.2">
+
+<h2>Terminology</h2>
+<ul>
+<li>Miscellaneous
+<ul>
+<li><code>MTU</code> <code>QDISC</code> <code>QLEN</code></li>
+<li><code>SO_LINGER</code> <code>SO_NODELAY</code></li>
+
+</ul></li>
+
+</ul>
+
+</section>
+</section>
+<section>
+<section id="slide-org74d3d08" data-background="./img/its_always_dns.jpg" data-background-size="800px" data-background-position="right" data-background-opacity="0.2">
+<h2 id="org74d3d08">Why is it DNS?</h2>
+</section>
+<section id="slide-orgf1f42fb" data-background-position="right" data-background-opacity="0.2">
+<h3 id="orgf1f42fb">Hardest problems in Computer Science</h3>
+<ul>
+<li>Naming</li>
+<li>Caching</li>
+<li>Recursion</li>
+<li>Distributed
+<ul>
+<li>unreliable</li>
+<li>badly (or maliciously) configured</li>
+
+</ul></li>
+
+</ul>
+
+</section>
+<section id="slide-org26d49ad" data-background-position="right" data-background-opacity="0.2">
+<h3 id="org26d49ad">Context</h3>
+<ul>
+<li>Old Protocol (1987) - RFC1034 / RFC1035
+<ul>
+<li>Updated by 1101, 1183, 1348, 1876, 1982, 1995, 1996, 2065, 2136, 2181, 2137, 2308, 2535, 2673, 2845, 3425, 3658, 4033, 4034, 4035, 4343, 5936, 5966, 6604, 7766, 8482, 8490, 8767</li>
+
+</ul></li>
+<li>First step for most network interactions - performance is critical for interactivity.</li>
+<li>We trusted back then. What is Authority? (DNSSec introduces crypto - another problem)</li>
+
+</ul>
+
+</section>
+<section id="slide-orgbf3095d" data-background-position="right" data-background-opacity="0.2">
+<h3 id="orgbf3095d">What is stored in DNS?</h3>
+<div class="small_code" id="org38bfa1e">
+<div class="org-src-container">
+
+<pre   ><code class="shell" >dig +nocomments any sw1nn.com | sort -r -k 1 -k 4
+</code></pre>
+</div>
+
+<div class="org-src-container">
+
+<pre   ><code class="dns" >;; WHEN: Tue Jan 10 13:21:06 GMT 2023
+;sw1nn.com.			IN	ANY
+sw1nn.com.		813	IN	SOA	ns-895.awsdns-47.net. awsdns-hostmaster.amazon.com. 1 7200 900 1209600 86400
+sw1nn.com.		813	IN	NS	ns-895.awsdns-47.net.
+sw1nn.com.		813	IN	NS	ns-427.awsdns-53.com.
+sw1nn.com.		813	IN	NS	ns-1668.awsdns-16.co.uk.
+sw1nn.com.		813	IN	NS	ns-1409.awsdns-48.org.
+sw1nn.com.		813	IN	MX	5 alt2.aspmx.l.google.com.
+sw1nn.com.		813	IN	MX	5 alt1.aspmx.l.google.com.
+sw1nn.com.		813	IN	MX	1 aspmx.l.google.com.
+sw1nn.com.		813	IN	MX	10 alt4.aspmx.l.google.com.
+sw1nn.com.		813	IN	MX	10 alt3.aspmx.l.google.com.
+sw1nn.com.		60	IN	A	143.204.68.64
+sw1nn.com.		60	IN	A	143.204.68.6
+sw1nn.com.		60	IN	A	143.204.68.19
+sw1nn.com.		60	IN	A	143.204.68.109
+sw1nn.com.		300	IN	TXT	"v=spf1 a:gw0.sw1nn.com include:_spf.google.com -all"
+sw1nn.com.		300	IN	TXT	"keybase-site-verification=Sbl5DIqMz2YhOzwJRJ-42cuCc_5bi-IqcDgDoLI4xxY"
+sw1nn.com.		300	IN	TXT	"google-site-verification=j9z8EzWtUwDq8euHd3e6BT9zcWMh7RpGasi4ldaXqeA"
+sw1nn.com.		300	IN	CAA	0 issuewild ";"
+sw1nn.com.		300	IN	CAA	0 issue "letsencrypt.org"
+sw1nn.com.		300	IN	CAA	0 issue "awstrust.com"
+sw1nn.com.		300	IN	CAA	0 issue "amazontrust.com"
+sw1nn.com.		300	IN	CAA	0 issue "amazon.com"
+sw1nn.com.		300	IN	CAA	0 issue "amazonaws.com"
+;; SERVER: 127.0.0.53#53(127.0.0.53) (TCP)
+;; Query time: 40 msec
+;; MSG SIZE  rcvd: 826
+;; global options: +cmd
+; &lt;&lt;&gt;&gt; DiG 9.18.10 &lt;&lt;&gt;&gt; +nocomments any sw1nn.com
+
+
+</code></pre>
+</div>
+
+</div>
+
+</section>
+<section id="slide-org3057d24" data-background-position="right" data-background-opacity="0.2">
+<h3 id="org3057d24">Configuring your local DNS server</h3>
+<ul>
+<li><p>
+How does your local machine resolve names?
+</p>
+<div class="small_code" id="orgb150f73">
+<div class="org-src-container">
+<label class="org-src-name">/etc/nsswitch.conf</label>
+<pre   ><code class="src" >...
+
+hosts: mymachines mdns_minimal [NOTFOUND=return] resolve [!UNAVAIL=return] files myhostname dns
+
+...
+</code></pre>
+</div>
+
+
+<div class="org-src-container">
+<label class="org-src-name">/etc/resolv.conf</label>
+<pre   ><code class="src" >nameserver 192.168.0.1
+nameserver 172.20.0.2
+search home lan
+</code></pre>
+</div>
+
+</div>
+
+</section>
+<section id="slide-orgd90dcc4-split" data-background-position="right" data-background-opacity="0.2">
+<div class="small_code" id="orgfa1134a">
+<div class="org-src-container">
+<label class="org-src-name">diff -uw /run/systemd/resolve/resolv.conf /run/systemd/resolve/stub-resolv.conf # (comments elided)</label>
+<pre   ><code class="diff" >--- /dev/fd/63	2023-01-10 13:21:06.305619332 +0000
++++ /dev/fd/62	2023-01-10 13:21:06.305619332 +0000
+@@ -1,4 +1,4 @@
+
+-nameserver 192.168.1.254
+-nameserver fe80::e675:dcff:fec3:6f93%4
++nameserver 127.0.0.53
++options edns0 trust-ad
+ search home blandford paxton ad.corp gcp.oscaro.internal oscaro.be oscaro.com oscaro.de oscaro.es oscaro.media oscaro.pt oscaro.team oscaroad.com
+</code></pre>
+</div>
+
+</div>
+
+</section>
+<section id="slide-orgd90dcc4-split" data-background-position="right" data-background-opacity="0.2">
+<div class="org-src-container">
+
+<pre  id="resolvectl_status" ><code class="sh" >resolvectl status
+</code></pre>
+</div>
+
+<div class="small_code" id="org9025d34">
+<div class="org-src-container">
+
+<pre   ><code class="sh" >Global
+           Protocols: +LLMNR +mDNS -DNSOverTLS DNSSEC=no/unsupported
+    resolv.conf mode: stub
+Fallback DNS Servers: 1.1.1.1#cloudflare-dns.com 9.9.9.9#dns.quad9.net
+                      8.8.8.8#dns.google 2606:4700:4700::1111#cloudflare-dns.com
+                      2620:fe::9#dns.quad9.net 2001:4860:4860::8888#dns.google
+
+Link 2 (wg0)
+Current Scopes: none
+     Protocols: -DefaultRoute +LLMNR -mDNS -DNSOverTLS DNSSEC=no/unsupported
+
+Link 3 (enp88s0)
+Current Scopes: none
+     Protocols: -DefaultRoute +LLMNR -mDNS -DNSOverTLS DNSSEC=no/unsupported
+    DNS Domain: blandford paxton
+
+Link 4 (wlo1)
+    Current Scopes: DNS LLMNR/IPv4 LLMNR/IPv6
+         Protocols: +DefaultRoute +LLMNR -mDNS -DNSOverTLS DNSSEC=no/unsupported
+Current DNS Server: 192.168.1.254
+       DNS Servers: 192.168.1.254 fe80::e675:dcff:fec3:6f93
+        DNS Domain: home
+
+Link 6 (br-838b7f23bb93)
+Current Scopes: none
+     Protocols: -DefaultRoute +LLMNR -mDNS -DNSOverTLS DNSSEC=no/unsupported
+
+Link 7 (br-88ded7088275)
+Current Scopes: none
+     Protocols: -DefaultRoute +LLMNR -mDNS -DNSOverTLS DNSSEC=no/unsupported
+
+Link 8 (docker0)
+Current Scopes: none
+     Protocols: -DefaultRoute +LLMNR -mDNS -DNSOverTLS DNSSEC=no/unsupported
+
+Link 10 (tun0)
+    Current Scopes: DNS
+         Protocols: -DefaultRoute -LLMNR -mDNS -DNSOverTLS DNSSEC=no/unsupported
+Current DNS Server: 172.16.144.29
+       DNS Servers: 172.16.144.29 172.16.144.30
+        DNS Domain: ad.corp gcp.oscaro.internal oscaro.be oscaro.com oscaro.de
+                    oscaro.es oscaro.media oscaro.pt oscaro.team oscaroad.com
+</code></pre>
+</div>
+
+</div>
+</section>
+<section id="slide-orgd90dcc4-split" data-background-position="right" data-background-opacity="0.2">
+<div class="DIV" id="orgdf006cb">
+<p>
+<code>multicast DNS</code>
+</p>
+
+</div></li>
+
+</ul>
+
+</section>
+</section>
+<section>
+<section id="slide-org6f10e63" data-background-position="right" data-background-opacity="0.2">
+<h2 id="org6f10e63">graph</h2>
+
+<div id="org6e4befa" class="figure">
+<p><img src="img/graph.svg" alt="graph.svg" class="org-svg" />
+</p>
+</div>
+
+
+
+<div id="org8c1d6f2" class="figure">
+<p><img src="img/ditaatest1.png" alt="ditaatest1.png" />
+</p>
+</div>
+
+</section>
+</section>
+<section>
+<section id="slide-orgd684f4a" data-background-position="right" data-background-opacity="0.2">
+<h2 id="orgd684f4a">iptables et al.</h2>
+<div class="org-src-container">
+
+<pre   ><code class="shell" >iptables -nvL
+
+</code></pre>
+</div>
+</section>
+</section>
+<section>
+<section id="slide-org43f9bed" data-background-position="right" data-background-opacity="0.2">
+<h2 id="org43f9bed">Packet Capture FTW</h2>
+
+</section>
+</section>
+<section>
+<section id="slide-org0d06378" data-background-position="right" data-background-opacity="0.2">
+<h2 id="org0d06378">Cloud</h2>
+
+</section>
+</section>
+<section>
+<section id="slide-org9692d83" data-background-position="right" data-background-opacity="0.2">
+<h2 id="org9692d83">Wrap Up</h2>
+<ul>
+<li><p>
+<a href="https://github.com/sw1nn/network-safari">github.com/sw1nn/network-safari</a>
+</p>
+
+
+<div id="org829fdb0" class="figure">
+<p><img src="./img/repo-qr.png" alt="repo-qr.png" />
+</p>
+</div></li>
+
+</ul>
+</section>
+</section>
+</div>
+</div>
+<script src="./reveal.js/dist/reveal.js"></script>
+<script src="./reveal.js/plugin/notes/notes.js"></script>
+<script src="./reveal.js/plugin/highlight/highlight.js"></script>
+
+
+<script>
+// Full list of configuration options available here:
+// https://github.com/hakimel/reveal.js#configuration
+Reveal.initialize({
+plugins: [RevealNotes, RevealHighlight],
+slideNumber:true
+});
+
+</script>
+</body>
+</html>

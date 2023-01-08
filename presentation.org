@@ -1,0 +1,353 @@
+#+OPTIONS: num:nil toc:1 timestamp:nil
+#+Title: Networks for developing
+#+Subtitle: Putting the *works* into networks
+#+Author: Neale Swinnerton
+#+Date: 2023-01-18
+#+REVEAL_PLUGINS: (notes highlight)
+#+REVEAL_INIT_OPTIONS: slideNumber:true
+#+REVEAL_TITLE_SLIDE_BACKGROUND: ./img/title2-darker.png
+#+REVEAL_TITLE_SLIDE_OPACITY: 0.2
+#+REVEAL_DEFAULT_SLIDE_BACKGROUND_POSITION: right
+#+REVEAL_DEFAULT_SLIDE_BACKGROUND_OPACITY: 0.2
+#+REVEAL_TOC_SLIDE_BACKGROUND: ./img/agenda.png
+#+REVEAL_TOC_SLIDE_BACKGROUND_SIZE: 800px
+#+REVEAL_TOC_SLIDE_BACKGROUND_POSITION: right
+#+REVEAL_TOC_SLIDE_BACKGROUND_OPACITY: 0.2
+#+REVEAL_EXTRA_CSS: ./presentation.css
+#+REVEAL_THEME: solarized
+
+* Prerequisites
+   + =net-tools= package ( =ifconfig(8)=, =route(8)=, =arp(8)= and =netstat(1)= et al.) has been deprecated for over 10 years.
+   + prefer =iproute2= package. All functions of net-tools and more are available.
+   + Standardised interface and output. Also ~--json~ option makes parsing nicer.
+
+* Terminology
+  :PROPERTIES:
+  :reveal_background: ./img/terminology.jpg
+  :reveal_background_size: 800px
+  :reveal_background_position: right
+  :reveal_background_opacity: 0.2
+  :END:
+
+  + =ip link=
+   #+ATTR_HTML: :class r-stack
+   #+BEGIN_ip_link
+   #+ATTR_REVEAL: :frag fade-in-then-out :frag_idx 1
+   #+begin_src dns
+   1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN mode DEFAULT group default qlen 1000
+       link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+   2: wg0: <POINTOPOINT,NOARP> mtu 1420 qdisc noop state DOWN mode DEFAULT group default qlen 1000
+       link/none
+   3: enp88s0: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 1500 qdisc mq state DOWN mode DEFAULT group default qlen 1000
+       link/ether 48:21:0b:36:d3:08 brd ff:ff:ff:ff:ff:ff
+   4: wlo1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP mode DORMANT group default qlen 1000
+       link/ether 84:7b:57:20:f9:54 brd ff:ff:ff:ff:ff:ff
+       altname wlp0s20f3
+   5: tun0: <POINTOPOINT,MULTICAST,NOARP,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UNKNOWN mode DEFAULT group default qlen 500
+       link/none
+   #+end_src
+
+   #+ATTR_REVEAL: :frag appear :frag_idx 2
+   #+name: with_docker
+   #+begin_src routeros
+   1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN mode DEFAULT group default qlen 1000
+       link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+   2: wg0: <POINTOPOINT,NOARP> mtu 1420 qdisc noop state DOWN mode DEFAULT group default qlen 1000
+       link/none
+   3: enp88s0: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 1500 qdisc mq state DOWN mode DEFAULT group default qlen 1000
+       link/ether 48:21:0b:36:d3:08 brd ff:ff:ff:ff:ff:ff
+   4: wlo1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP mode DORMANT group default qlen 1000
+       link/ether 84:7b:57:20:f9:54 brd ff:ff:ff:ff:ff:ff
+       altname wlp0s20f3
+   5: tun0: <POINTOPOINT,MULTICAST,NOARP,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UNKNOWN mode DEFAULT group default qlen 500
+       link/none
+   6: br-838b7f23bb93: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 1500 qdisc noqueue state DOWN mode DEFAULT group default
+       link/ether 02:42:82:04:a9:90 brd ff:ff:ff:ff:ff:ff
+   7: br-88ded7088275: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 1500 qdisc noqueue state DOWN mode DEFAULT group default
+       link/ether 02:42:66:71:f3:b8 brd ff:ff:ff:ff:ff:ff
+   8: docker0: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 1500 qdisc noqueue state DOWN mode DEFAULT group default
+       link/ether 02:42:38:a1:bf:e9 brd ff:ff:ff:ff:ff:ff
+   #+end_src
+  #+END_ip_link
+
+  #+REVEAL: split:t
+  + ip addr show [devname]
+   #+ATTR_HTML: :class r-stack
+   #+BEGIN_ip_addr
+   #+begin_src shell :wrap src routeros :exports results :results verbatim
+   ip addr show wlo1
+   #+end_src
+
+   #+ATTR_REVEAL: :frag fade-in-then-out :frag_idx 1
+   #+RESULTS:
+   #+begin_src routeros
+   4: wlo1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP group default qlen 1000
+       link/ether 84:7b:57:20:f9:54 brd ff:ff:ff:ff:ff:ff
+       altname wlp0s20f3
+       inet 192.168.1.177/24 metric 1024 brd 192.168.1.255 scope global dynamic wlo1
+	  valid_lft 81726sec preferred_lft 81726sec
+       inet6 2a00:23c7:621c:f201:867b:57ff:fe20:f954/64 scope global dynamic mngtmpaddr noprefixroute
+	  valid_lft 272sec preferred_lft 92sec
+       inet6 fe80::867b:57ff:fe20:f954/64 scope link
+	  valid_lft forever preferred_lft forever
+   #+end_src
+
+   #+begin_src shell :wrap src routeros :exports results :results verbatim
+   ip addr show tun0
+   #+end_src
+
+   #+ATTR_REVEAL: :frag fade-in-then-out :frag_idx 2
+   #+RESULTS:
+   #+begin_src routeros
+   5: tun0: <POINTOPOINT,MULTICAST,NOARP,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UNKNOWN group default qlen 500
+       link/none
+       inet 172.16.146.92/26 brd 172.16.146.127 scope global tun0
+	  valid_lft forever preferred_lft forever
+       inet6 fe80::25a1:f375:b66b:8879/64 scope link stable-privacy
+	  valid_lft forever preferred_lft forever
+   #+end_src
+
+   #+begin_src shell :wrap src routeros :exports results :results verbatim
+   ip addr show wg0
+   #+end_src
+
+   #+ATTR_REVEAL: :frag appear :frag_idx 3
+   #+RESULTS:
+   #+begin_src routeros
+   2: wg0: <POINTOPOINT,NOARP> mtu 1420 qdisc noop state DOWN group default qlen 1000
+       link/none
+   #+end_src
+   #+END_ip_addr
+
+  #+REVEAL: split:t
+  + protocols
+  #+REVEAL: split:t
+  + routes
+  #+REVEAL: split:t
+  + bridges
+  #+REVEAL: split:t
+  + tun devices
+  #+REVEAL: split:t
+  + Miscellaneous
+    - =MTU= =QDISC= =QLEN=
+    - =SO_LINGER= =SO_NODELAY=
+
+* Why is it DNS?
+  :PROPERTIES:
+  :reveal_background: ./img/its_always_dns.jpg
+  :reveal_background_size: 800px
+  :reveal_background_position: right
+  :reveal_background_opacity: 0.2
+  :END:
+
+** Hardest problems in Computer Science
+    + Naming
+    + Caching
+    + Recursion
+    + Distributed
+      - unreliable
+      - badly (or maliciously) configured
+
+** Context
+    + Old Protocol (1987) - RFC1034 / RFC1035
+      - Updated by 1101, 1183, 1348, 1876, 1982, 1995, 1996, 2065, 2136, 2181, 2137, 2308, 2535, 2673, 2845, 3425, 3658, 4033, 4034, 4035, 4343, 5936, 5966, 6604, 7766, 8482, 8490, 8767
+    + First step for most network interactions - performance is critical for interactivity.
+    + We trusted back then. What is Authority? (DNSSec introduces crypto - another problem)
+
+** What is stored in DNS?
+#+BEGIN_small_code
+#+begin_src shell :exports both :results verbatim :wrap src dns
+dig +nocomments any sw1nn.com | sort -r -k 1 -k 4
+#+end_src
+
+#+RESULTS:
+#+begin_src dns
+;; WHEN: Sun Jan 08 16:21:34 GMT 2023
+;sw1nn.com.			IN	ANY
+sw1nn.com.		946	IN	NS	ns-895.awsdns-47.net.
+sw1nn.com.		946	IN	NS	ns-427.awsdns-53.com.
+sw1nn.com.		946	IN	NS	ns-1668.awsdns-16.co.uk.
+sw1nn.com.		946	IN	NS	ns-1409.awsdns-48.org.
+sw1nn.com.		946	IN	MX	5 alt2.aspmx.l.google.com.
+sw1nn.com.		946	IN	MX	5 alt1.aspmx.l.google.com.
+sw1nn.com.		946	IN	MX	1 aspmx.l.google.com.
+sw1nn.com.		946	IN	MX	10 alt4.aspmx.l.google.com.
+sw1nn.com.		946	IN	MX	10 alt3.aspmx.l.google.com.
+sw1nn.com.		900	IN	SOA	ns-895.awsdns-47.net. awsdns-hostmaster.amazon.com. 1 7200 900 1209600 86400
+sw1nn.com.		60	IN	A	143.204.68.64
+sw1nn.com.		60	IN	A	143.204.68.6
+sw1nn.com.		60	IN	A	143.204.68.19
+sw1nn.com.		60	IN	A	143.204.68.109
+sw1nn.com.		300	IN	TXT	"v=spf1 a:gw0.sw1nn.com include:_spf.google.com -all"
+sw1nn.com.		300	IN	TXT	"keybase-site-verification=Sbl5DIqMz2YhOzwJRJ-42cuCc_5bi-IqcDgDoLI4xxY"
+sw1nn.com.		300	IN	TXT	"google-site-verification=j9z8EzWtUwDq8euHd3e6BT9zcWMh7RpGasi4ldaXqeA"
+sw1nn.com.		300	IN	CAA	0 issuewild ";"
+sw1nn.com.		300	IN	CAA	0 issue "letsencrypt.org"
+sw1nn.com.		300	IN	CAA	0 issue "awstrust.com"
+sw1nn.com.		300	IN	CAA	0 issue "amazontrust.com"
+sw1nn.com.		300	IN	CAA	0 issue "amazon.com"
+sw1nn.com.		300	IN	CAA	0 issue "amazonaws.com"
+;; SERVER: 127.0.0.53#53(127.0.0.53) (TCP)
+;; Query time: 60 msec
+;; MSG SIZE  rcvd: 826
+;; global options: +cmd
+; <<>> DiG 9.18.10 <<>> +nocomments +rrcomments any sw1nn.com
+
+
+#+end_src
+#+end_small_code
+
+** Configuring your local DNS server
+- How does your local machine resolve names?
+  #+BEGIN_small_code
+  #+caption: /etc/nsswitch.conf
+  #+begin_src src conf
+  ...
+
+  hosts: mymachines mdns_minimal [NOTFOUND=return] resolve [!UNAVAIL=return] files myhostname dns
+
+  ...
+  #+end_src
+
+
+  #+caption: /etc/resolv.conf
+  #+begin_src src conf
+      nameserver 192.168.0.1
+      nameserver 172.20.0.2
+      search home lan
+  #+end_src
+  #+end_small_code
+
+  #+REVEAL: split: t
+  #+BEGIN_small_code
+  #+begin_src sh :exports results :results output :wrap src diff
+    diff -uw \
+	 <(grep -v '#' /run/systemd/resolve/resolv.conf)  \
+	 <(grep -v '#' /run/systemd/resolve/stub-resolv.conf) || true
+  #+end_src
+
+  #+caption: diff -uw /run/systemd/resolve/resolv.conf /run/systemd/resolve/stub-resolv.conf # (comments elided)
+  #+RESULTS:
+  #+begin_src diff
+  --- /dev/fd/63	2023-01-08 15:07:36.546809423 +0000
+  +++ /dev/fd/62	2023-01-08 15:07:36.546809423 +0000
+  @@ -1,4 +1,4 @@
+
+  -nameserver 192.168.1.254
+  -nameserver fe80::e675:dcff:fec3:6f93%4
+  +nameserver 127.0.0.53
+  +options edns0 trust-ad
+   search blandford paxton home
+  #+end_src
+
+  #+END_small_code
+
+  #+REVEAL: split: t
+  #+name: resolvectl_status
+  #+begin_src sh :exports both :results code
+  resolvectl status
+  #+end_src
+
+  #+BEGIN_small_code
+  #+RESULTS: resolvectl_status
+  #+begin_src sh
+  Global
+	     Protocols: +LLMNR +mDNS -DNSOverTLS DNSSEC=no/unsupported
+      resolv.conf mode: stub
+  Fallback DNS Servers: 1.1.1.1#cloudflare-dns.com 9.9.9.9#dns.quad9.net
+			8.8.8.8#dns.google 2606:4700:4700::1111#cloudflare-dns.com
+			2620:fe::9#dns.quad9.net 2001:4860:4860::8888#dns.google
+
+  Link 2 (wg0)
+  Current Scopes: none
+       Protocols: -DefaultRoute +LLMNR -mDNS -DNSOverTLS DNSSEC=no/unsupported
+
+  Link 3 (enp88s0)
+  Current Scopes: none
+       Protocols: -DefaultRoute +LLMNR -mDNS -DNSOverTLS DNSSEC=no/unsupported
+      DNS Domain: blandford paxton
+
+  Link 4 (wlo1)
+      Current Scopes: DNS LLMNR/IPv4 LLMNR/IPv6
+	   Protocols: +DefaultRoute +LLMNR -mDNS -DNSOverTLS DNSSEC=no/unsupported
+  Current DNS Server: 192.168.1.254
+	 DNS Servers: 192.168.1.254 fe80::e675:dcff:fec3:6f93
+	  DNS Domain: home
+
+  Link 5 (tun0)
+      Current Scopes: DNS
+	   Protocols: -DefaultRoute -LLMNR -mDNS -DNSOverTLS DNSSEC=no/unsupported
+  Current DNS Server: 172.16.144.30
+	 DNS Servers: 172.16.144.29 172.16.144.30
+	  DNS Domain: ad.corp gcp.oscaro.internal oscaro.be oscaro.com oscaro.de
+		      oscaro.es oscaro.media oscaro.pt oscaro.team oscaroad.com
+  #+end_src
+  #+END_small_code
+  #+REVEAL: split: t
+  #+BEGIN_DIV
+  =multicast DNS=
+  #+END_DIV
+
+* graph
+#+begin_src dot :file img/graph.svg :exports results
+  digraph G {
+    node_1;
+    node_2;
+    node_1 -> node_2 [style=dotted];
+  }
+
+#+end_src
+
+#+RESULTS:
+[[file:img/graph.svg]]
+
+
+#+BEGIN_SRC ditaa :file img/ditaatest1.png :cmdline -s 0.8
+
+    +----------------------+         +------------------+----+
+    | This is a box   |    +---------+  and this is     |    |
+    |                 |    |         |  another         |    |
+    |                 |    |         |                  |    |
+    |                 |    |         |                  |    |            +-------+
+    +-------+--------------+         +------------------+----+		  |       |
+            |								  |       |
+            |								  | {mo}  |
+            :           /------------------------------\      |      ^	  +-------+
+            |           |                              |      |      |
+            |           |   and yet another, but       |      |      |
+            +---------->+   with round corners         |      |      |    +-------+
+                        |   o list item 1              |      |      |    |       |
+                        |   o list item 2              |      |      |    |       |
+                        \------------------------------/      V      |    | {tr}  |
+                                                                          +-------+
+
+      +----------+       +--------------+       +---------------+    +-------+    +-------+
+      | Storage  |       | Document     |       | Input/Output  |    |       |    |       |
+      |          |       |              |       |               |    |       |    |       |
+      | cGRE     +-------+ cYEL         +---=---+ cRED          |    | {o}   |    | {c}   |
+      |          |       |              |       |               |    +-------+    +-------+
+      | {s}      |       | {d}          |       | {io}          |
+      +----------+       +--------------+       +---------------+
+
+
+  #+END_SRC
+
+  #+RESULTS:
+  [[file:img/ditaatest1.png]]
+
+* iptables et al.
+#+begin_src shell
+  iptables -nvL
+
+#+end_src
+* Packet Capture FTW
+
+* Cloud
+
+* Wrap Up
+:PROPERTIES:
+:UNNUMBERED: notoc
+:END:
+ - [[https://github.com/sw1nn/network-safari][github.com/sw1nn/network-safari]]
+
+   [[./img/repo-qr.png]]

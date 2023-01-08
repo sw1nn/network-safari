@@ -1,0 +1,11 @@
+version: '3.7'
+
+services:
+  dns:
+    image: strm/dnsmasq
+    container_name: dns-server
+    entrypoint:
+      - dnsmasq
+      - "-d"
+    volumes:
+      - ./dnsmasq.conf:/etc/dnsmasq.conf
