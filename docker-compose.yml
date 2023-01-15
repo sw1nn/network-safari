@@ -3,9 +3,46 @@ version: '3.7'
 services:
   dns:
     image: strm/dnsmasq
-    container_name: dns-server
+    hostname: dns0
     entrypoint:
       - dnsmasq
       - "-d"
     volumes:
       - ./dnsmasq.conf:/etc/dnsmasq.conf
+    networks:
+      safari-br:
+        ipv4_address: 10.42.10.254
+  host1:
+    image: simple-server
+    hostname: host1
+    ports:
+      - 8101:80
+    networks:
+      safari-br:
+        ipv4_address: 10.42.10.101
+
+  host2:
+    image: simple-server
+    hostname: host2
+    ports:
+      - 8102:80
+    networks:
+      safari-br:
+        ipv4_address: 10.42.10.102
+
+  host3:
+    image: simple-server 
+    hostname: host3
+    ports:
+      - 8103:80
+    networks:
+      safari-br:
+        ipv4_address: 10.42.10.103
+
+networks:
+  safari-br:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.42.10.0/24
+
