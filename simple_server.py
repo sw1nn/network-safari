@@ -2,6 +2,7 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 from http.client import HTTPConnection
 import socket
 import threading
+import os
 
 
 def delayed_GET(host, path):
@@ -16,10 +17,10 @@ def delayed_GET(host, path):
 
 class RequestHandler(BaseHTTPRequestHandler):
     def do_GET(self):
-        idx=int(socket.gethostname()[-1]) + 1
+        idx=int(socket.gethostname()[4]) + 1
         if idx > 3:
             idx = 1
-        args = (f"host{idx}", self.path)
+        args = (f"host{idx}.safari.", self.path)
         threading.Timer(5.0, delayed_GET, args).start();
 
         self.protocol_version = "HTTP/1.1"
@@ -33,7 +34,7 @@ class RequestHandler(BaseHTTPRequestHandler):
 
 def run(server_class=HTTPServer, handler_class=RequestHandler):
     """Entrypoint for python server"""
-    server_address = (socket.gethostbyname(socket.gethostname()), 80)
+    server_address = (socket.gethostbyname(socket.gethostname()), int(os.getenv("SAFARI_PORT", 80)))
     httpd = server_class(server_address, handler_class)
     print(f"Server listening on {server_address} ...")
     httpd.serve_forever()

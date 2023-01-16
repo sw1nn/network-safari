@@ -9,39 +9,53 @@ services:
       - "-d"
     volumes:
       - ./dnsmasq.conf:/etc/dnsmasq.conf
+      - ./hosts.d:/etc/dnsmasq/hosts.d
     networks:
-      safari-br:
+      net0:
         ipv4_address: 10.42.10.254
   host1:
     image: simple-server
-    hostname: host1
+    hostname: host1.safari
+    volumes:
+      - ./resolv.conf:/etc/resolv.conf
     ports:
       - 8101:80
+    dns:
+      - 10.42.10.254
     networks:
-      safari-br:
+      net0:
         ipv4_address: 10.42.10.101
 
   host2:
     image: simple-server
-    hostname: host2
+    hostname: host2.safari
+    volumes:
+      - ./resolv.conf:/etc/resolv.conf
     ports:
       - 8102:80
+    dns:
+      - 10.42.10.254
     networks:
-      safari-br:
+      net0:
         ipv4_address: 10.42.10.102
 
   host3:
     image: simple-server 
-    hostname: host3
+    hostname: host3.safari
+    volumes:
+      - ./resolv.conf:/etc/resolv.conf
     ports:
       - 8103:80
+    dns:
+      - 10.42.10.254
     networks:
-      safari-br:
+      net0:
         ipv4_address: 10.42.10.103
 
 networks:
-  safari-br:
+ net0:
     driver: bridge
+    enable_ipv6: false
     ipam:
       config:
         - subnet: 10.42.10.0/24
