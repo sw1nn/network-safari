@@ -3,7 +3,7 @@
 #+Subtitle: Putting the "*works"* into developer networks
 #+Author: Neale Swinnerton
 #+Date: 2023-01-18
-#+REVEAL_PLUGINS: (highlight)
+#+REVEAL_PLUGINS: (notes highlight)
 #+REVEAL_INIT_OPTIONS: width:1500, slideNumber:true, controlsLayout: 'edges'
 #+REVEAL_TITLE_SLIDE_BACKGROUND: ./img/title2-darker.png
 #+REVEAL_TITLE_SLIDE_OPACITY: 0.2
@@ -65,6 +65,9 @@
    5: tun0: <POINTOPOINT,MULTICAST,NOARP,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UNKNOWN mode DEFAULT group default qlen 500
        link/none
    #+end_src
+   #+begin_notes
+various interfaces, with different properties
+   #+end_notes
    #+END_link1
 
    #+ATTR_REVEAL: :frag fade-in-then-out :frag_idx 2
@@ -72,8 +75,11 @@
    #+begin_example shell :wrap src routeros :exports both :results verbatim
       ip link show #when docker running
    #+end_example
-
+   #+begin_notes
+running docker brings in some new interfaces, including bridges
+   #+end_notes
    #+begin_src routeros
+
    1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN mode DEFAULT group default qlen 1000
        link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
    2: wg0: <POINTOPOINT,NOARP> mtu 1420 qdisc noop state DOWN mode DEFAULT group default qlen 1000
@@ -118,6 +124,9 @@
 	   "broadcast": "ff:ff:ff:ff:ff:ff"
        } ]
    #+end_src
+   #+begin_notes
+json output good for parsing, but also handy for labelling unfamiliar fields
+   #+end_notes
    #+END_link3
    #+END_ip_link
 
@@ -143,6 +152,12 @@
        inet6 fe80::867b:57ff:fe20:f954/64 scope link
 	  valid_lft forever preferred_lft forever
    #+end_src
+   #+begin_notes
+wireless i/f
+point out
++ altname
++ dynamic / lease time
+   #+end_notes
    #+END_wlo1
 
    #+ATTR_REVEAL: :frag fade-in-then-out :frag_idx 2
@@ -161,6 +176,9 @@
        inet6 fe80::a9bc:8cdc:23b7:7607/64 scope link stable-privacy
 	  valid_lft forever preferred_lft forever
    #+end_src
+   #+begin_notes
+first VPN i/f - qdisc, mtu
+   #+end_notes
    #+end_tun0
 
    #+ATTR_REVEAL: :frag fade-in-then-out :frag_idx 3
@@ -176,6 +194,10 @@
        inet 10.9.0.7/24 metric 512 scope global wg0
 	  valid_lft forever preferred_lft forever
    #+end_src
+   #+begin_notes
+mtu = 1420 - layer 2/3
+qdisc
+   #+end_notes
    #+END_wg0
 
    #+ATTR_REVEAL: :frag fade-in-then-out :frag_idx 4
@@ -195,6 +217,10 @@
        inet6 fe80::4a21:bff:fe36:d308/64 scope link
 	  valid_lft forever preferred_lft forever
    #+end_src
+   #+begin_notes
+wired i/f
+metric
+   #+end_notes
    #+END_enp88s0
 
    #+ATTR_REVEAL: :frag appear :frag_idx 5
@@ -223,6 +249,9 @@
 
    -
    #+end_src
+   #+begin_notes
+sipcalc - good for working with CIDRs
+   #+end_notes
    #+END_sipcalc
    #+END_ip_addr
 
@@ -251,6 +280,11 @@
     192.168.2.0/24 dev wg0 scope link
     213.218.143.135 via 192.168.1.254 dev enp88s0
     #+end_src
+    #+begin_notes
+filtering tun0 - cos
++ oscaro vpn pushes loads of routes
++ common problem with corporate VPN - no visibility or influence over the VPN (team)
+    #+end_notes
    #+END_route1
 
    #+ATTR_REVEAL: :frag appear :frag_idx 2
@@ -287,6 +321,9 @@
     192.168.1.255                   192.168.1.177   kernel   link    wlo1             local
     #+end_src
     #+END_route2
+   #+begin_notes
+different format
+   #+end_notes
     #+END_ip_route
     
 ** bridges
@@ -315,7 +352,10 @@ cb20fdb51056   host                  host      local
 1a1f85fce263   network-safari_net0   bridge    local
 70d3f12412e2   none                  null      local
 #+end_src
-
+#+begin_notes
+docker creates a bridge ~ 'software router'
+k8s extends this with flannel - virtual network across multiple nodes
+#+end_notes
 ** protocols
      | UDP  | connectionless, lossy                                      |
      | TCP  | connection-oriented, congestion-controlled, reliable       |
@@ -323,21 +363,18 @@ cb20fdb51056   host                  host      local
      | IGMP | group control protocol, used for multicast                 |
      | DHCP | host configuration protocol - dynamic IP, routes etc.      |
      | NTP  | Network time protocol
-
+     #+begin_notes
+network layer protocols
+     #+end_notes
 #+REVEAL: split:t
      | HTTP(S)                   | Old faithful (TCP, TLS)                                            |
      | QUIC (colloquially TCP/2) | low latency, multiplexed, error-corrected, reliable, UDP/TLS based |
      | HTTP/3                    | HTTP over QUIC                                                     |
-
+     #+begin_notes
+application layer protocols
+     #+end_notes
 
 *** DHCP - Dynamic Host Configuration Protocol
-  :PROPERTIES:
-  :reveal_background: ./img/dependency.png
-  :reveal_background_size: 800px
-  :reveal_background_position: right
-  :reveal_background_opacity: 0.2
-  :END:
-
     - IP address leases
     - Gateways
     - Hostname
@@ -347,8 +384,81 @@ cb20fdb51056   host                  host      local
     - Static Routes
     - Time Servers
     - Time Zone
+    #+begin_notes
+dhcp, dns, servers often 'complected' - dnsmasq
+    #+end_notes
+** Time
+  :PROPERTIES:
+  :reveal_background: ./img/dependency.png
+  :reveal_background_size: 800px
+  :reveal_background_position: right
+  :reveal_background_opacity: 0.2
+  :END:
 
+- Anything crypto is sensitive to times (certificate validity checks)
+- Network changes (i.e. starting and stopping VPNs or docker
+  containers) can trigger time server changes
+#+begin_notes
++ ntp - one guy did most of the dev for decades.
++ other implementations becoming available.
++ dns and ntp often implicated in DDOS amplification attacks, firewall mitigations
+#+end_notes
+#+REVEAL: split:t
+#+ATTR_HTML: :class r-stack
+#+BEGIN_time
+#+ATTR_REVEAL: :frag fade-in-then-out :frag_idx 1
+#+BEGIN_timedatectl
+  #+begin_src sh :wrap src shell :exports both :results verbatim
+  timedatectl
+  #+end_src
+
+  #+RESULTS:
+  #+begin_src shell
+		 Local time: Wed 2023-01-18 10:47:45 GMT
+	     Universal time: Wed 2023-01-18 10:47:45 UTC
+		   RTC time: Wed 2023-01-18 10:47:45
+		  Time zone: Europe/London (GMT, +0000)
+  System clock synchronized: yes
+		NTP service: active
+	    RTC in local TZ: no
+  #+end_src
+  #+END_timedatectl
+
+   #+ATTR_REVEAL: :frag appear :frag_idx 2
+   #+BEGIN_timesyncd
+  #+begin_src sh :wrap src shell :exports both :results verbatim
+    systemctl status systemd-timesyncd
+  #+end_src
+
+  #+RESULTS:
+  #+begin_src shell
+  ● systemd-timesyncd.service - Network Time Synchronization
+       Loaded: loaded (/usr/lib/systemd/system/systemd-timesyncd.service; enabled; preset: enabled)
+       Active: active (running) since Tue 2023-01-17 09:41:16 GMT; 1 day 1h ago
+	 Docs: man:systemd-timesyncd.service(8)
+     Main PID: 590 (systemd-timesyn)
+       Status: "Contacted time server [2a0d:5440::24]:123 (2.arch.pool.ntp.org)."
+	Tasks: 4 (limit: 18749)
+       Memory: 1.9M
+	  CPU: 806ms
+       CGroup: /system.slice/systemd-timesyncd.service
+	       └─590 /usr/lib/systemd/systemd-timesyncd
+
+  Jan 18 10:22:29 jurgen systemd-timesyncd[590]: Network configuration changed, trying to establish connection.
+  Jan 18 10:22:29 jurgen systemd-timesyncd[590]: Contacted time server [2a0d:5440::24]:123 (2.arch.pool.ntp.org).
+  Jan 18 10:22:31 jurgen systemd-timesyncd[590]: Network configuration changed, trying to establish connection.
+  Jan 18 10:22:31 jurgen systemd-timesyncd[590]: Contacted time server [2a0d:5440::24]:123 (2.arch.pool.ntp.org).
+  Jan 18 10:22:31 jurgen systemd-timesyncd[590]: Network configuration changed, trying to establish connection.
+  Jan 18 10:22:31 jurgen systemd-timesyncd[590]: Contacted time server [2a0d:5440::24]:123 (2.arch.pool.ntp.org).
+  Jan 18 10:22:31 jurgen systemd-timesyncd[590]: Network configuration changed, trying to establish connection.
+  Jan 18 10:22:31 jurgen systemd-timesyncd[590]: Contacted time server [2a0d:5440::24]:123 (2.arch.pool.ntp.org).
+  Jan 18 10:22:31 jurgen systemd-timesyncd[590]: Network configuration changed, trying to establish connection.
+  Jan 18 10:22:31 jurgen systemd-timesyncd[590]: Contacted time server [2a0d:5440::24]:123 (2.arch.pool.ntp.org).
+  #+end_src
+#+END_timesyncd
+#+END_time
 ** Miscellaneous
+
     - link parameters
       + =MTU=
       + =QDISC=
@@ -356,7 +466,10 @@ cb20fdb51056   host                  host      local
     - socket options
       + =SO_LINGER=
       + =SO_NODELAY=
-
+    #+begin_notes
+MTU - maximum transmission unit
+QDISC / QLEN - if your app is stressed the network i/f can behave differently
+    #+end_notes
 * Why is it DNS?
   :PROPERTIES:
   :reveal_background: ./img/its_always_dns.jpg
@@ -376,8 +489,10 @@ cb20fdb51056   host                  host      local
 ** Context
     + Old Protocol (1987) - RFC1034 / RFC1035
       - Updated by 1101, 1183, 1348, 1876, 1982, 1995, 1996, 2065, 2136, 2181, 2137, 2308, 2535, 2673, 2845, 3425, 3658, 4033, 4034, 4035, 4343, 5936, 5966, 6604, 7766, 8482, 8490, 8767
+    #+begin_notes
     + First step for most network interactions - performance is critical for interactivity.
     + We trusted back then. What is Authority? (DNSSec introduces crypto - another problem)
+    #+end_notes
 
 ** What is stored in DNS?
 #+begin_example shell :exports both :results verbatim :wrap src dns
@@ -419,6 +534,9 @@ sw1nn.com.		299	IN	CAA	0 issue "amazonaws.com"
 
 
 #+end_src
+#+begin_notes
+PTR records - often difficult to set up because you don't 'own' the netrange. (as opposed to the domain name)
+#+end_notes
 
 ** Configuring your local DNS server
 - How does your local machine resolve names?
@@ -430,7 +548,9 @@ sw1nn.com.		299	IN	CAA	0 issue "amazonaws.com"
 
   ...
   #+end_src
-
+#+begin_notes
+very finickity - try to use defaults
+#+end_notes
 
   #+caption: /etc/resolv.conf
   #+begin_src src conf
@@ -448,6 +568,10 @@ sw1nn.com.		299	IN	CAA	0 issue "amazonaws.com"
 	 <(grep -v '#' /run/systemd/resolve/stub-resolv.conf) || true
   #+end_src
 
+#+begin_notes
+systemd-resolved  vs resolvconf
+
+#+end_notes
   #+caption: /run/systemd/resolve/* # (comments elided)
   #+RESULTS:
   #+begin_src diff
@@ -537,6 +661,10 @@ sw1nn.com.		299	IN	CAA	0 issue "amazonaws.com"
     +-----------------------=------------------------------------------------+
   #+END_SRC
 
+#+begin_notes
++ 3 identical hosts, on GET call next in sequence
++ 'custom' DNS (not default - docker has embedded DNS)
+#+end_notes
   #+RESULTS:
   [[file:img/network-diagram.png]]
 
@@ -552,7 +680,166 @@ sw1nn.com.		299	IN	CAA	0 issue "amazonaws.com"
     - change addresses
     - change flags
 - nftables replaces iptables et al., although iptables is still in wide use.
+** Typical output
 
+#+ATTR_HTML: :class r-stack
+#+begin_packets
+#+ATTR_REVEAL: :frag fade-in-then-out :frag_idx 1
+#+begin_iptables
+#+begin_example shell :exports both :results verbatim
+iptables --numeric --verbose --list # --table filter
+#+end_example
+#+begin_notes
+iptables has built in tables, filter is default
+#+end_notes
+#+RESULTS:
+#+begin_src routeros
+Chain INPUT (policy ACCEPT 0 packets, 0 bytes)
+ pkts bytes target     prot opt in     out     source               destination
+
+Chain FORWARD (policy DROP 0 packets, 0 bytes)
+ pkts bytes target     prot opt in     out     source               destination
+54690  104M DOCKER-USER  all  --  *      *       0.0.0.0/0            0.0.0.0/0
+54690  104M DOCKER-ISOLATION-STAGE-1  all  --  *      *       0.0.0.0/0            0.0.0.0/0
+ 6890   20M ACCEPT     all  --  *      br-46b699d0a4fe  0.0.0.0/0            0.0.0.0/0            ctstate RELATED,ESTABLISHED
+   20  1168 DOCKER     all  --  *      br-46b699d0a4fe  0.0.0.0/0            0.0.0.0/0
+ 5477  361K ACCEPT     all  --  br-46b699d0a4fe !br-46b699d0a4fe  0.0.0.0/0            0.0.0.0/0
+   20  1168 ACCEPT     all  --  br-46b699d0a4fe br-46b699d0a4fe  0.0.0.0/0            0.0.0.0/0
+25494   82M ACCEPT     all  --  *      docker0  0.0.0.0/0            0.0.0.0/0            ctstate RELATED,ESTABLISHED
+    0     0 DOCKER     all  --  *      docker0  0.0.0.0/0            0.0.0.0/0
+16809  917K ACCEPT     all  --  docker0 !docker0  0.0.0.0/0            0.0.0.0/0
+    0     0 ACCEPT     all  --  docker0 docker0  0.0.0.0/0            0.0.0.0/0
+ 1614 1396K ACCEPT     all  --  *      br-88ded7088275  0.0.0.0/0            0.0.0.0/0            ctstate RELATED,ESTABLISHED
+   11   660 DOCKER     all  --  *      br-88ded7088275  0.0.0.0/0            0.0.0.0/0
+  596 36816 ACCEPT     all  --  br-88ded7088275 !br-88ded7088275  0.0.0.0/0            0.0.0.0/0
+   11   660 ACCEPT     all  --  br-88ded7088275 br-88ded7088275  0.0.0.0/0            0.0.0.0/0
+
+Chain OUTPUT (policy ACCEPT 0 packets, 0 bytes)
+ pkts bytes target     prot opt in     out     source               destination
+
+Chain DOCKER (3 references)
+ pkts bytes target     prot opt in     out     source               destination
+    0     0 ACCEPT     tcp  --  !br-46b699d0a4fe br-46b699d0a4fe  0.0.0.0/0            10.42.10.103         tcp dpt:80
+    0     0 ACCEPT     tcp  --  !br-46b699d0a4fe br-46b699d0a4fe  0.0.0.0/0            10.42.10.101         tcp dpt:80
+    0     0 ACCEPT     tcp  --  !br-46b699d0a4fe br-46b699d0a4fe  0.0.0.0/0            10.42.10.102         tcp dpt:80
+
+Chain DOCKER-ISOLATION-STAGE-1 (1 references)
+ pkts bytes target     prot opt in     out     source               destination
+ 5477  361K DOCKER-ISOLATION-STAGE-2  all  --  br-46b699d0a4fe !br-46b699d0a4fe  0.0.0.0/0            0.0.0.0/0
+16809  917K DOCKER-ISOLATION-STAGE-2  all  --  docker0 !docker0  0.0.0.0/0            0.0.0.0/0
+  596 36816 DOCKER-ISOLATION-STAGE-2  all  --  br-88ded7088275 !br-88ded7088275  0.0.0.0/0            0.0.0.0/0
+67668  120M RETURN     all  --  *      *       0.0.0.0/0            0.0.0.0/0
+
+Chain DOCKER-ISOLATION-STAGE-2 (3 references)
+ pkts bytes target     prot opt in     out     source               destination
+    0     0 DROP       all  --  *      br-46b699d0a4fe  0.0.0.0/0            0.0.0.0/0
+    0     0 DROP       all  --  *      docker0  0.0.0.0/0            0.0.0.0/0
+    0     0 DROP       all  --  *      br-88ded7088275  0.0.0.0/0            0.0.0.0/0
+27186 1615K RETURN     all  --  *      *       0.0.0.0/0            0.0.0.0/0
+
+Chain DOCKER-USER (1 references)
+ pkts bytes target     prot opt in     out     source               destination
+67668  120M RETURN     all  --  *      *       0.0.0.0/0            0.0.0.0/0
+
+
+#+end_src
+#+end_iptables
+
+#+ATTR_REVEAL: :frag fade-in-then-out :frag_idx 2
+#+begin_nftables
+#+begin_example shell :exports both :results verbatim
+nft list table filter # --json
+#+end_example
+
+#+RESULTS:
+#+begin_src routeros
+table ip filter {
+	chain DOCKER {
+		iifname != "br-46b699d0a4fe" oifname "br-46b699d0a4fe" ip daddr 10.42.10.103 tcp dport 80 counter packets 0 bytes 0 accept
+		iifname != "br-46b699d0a4fe" oifname "br-46b699d0a4fe" ip daddr 10.42.10.101 tcp dport 80 counter packets 0 bytes 0 accept
+		iifname != "br-46b699d0a4fe" oifname "br-46b699d0a4fe" ip daddr 10.42.10.102 tcp dport 80 counter packets 0 bytes 0 accept
+	}
+
+	chain DOCKER-ISOLATION-STAGE-1 {
+		iifname "br-46b699d0a4fe" oifname != "br-46b699d0a4fe" counter packets 5477 bytes 360669 jump DOCKER-ISOLATION-STAGE-2
+		iifname "docker0" oifname != "docker0" counter packets 16809 bytes 916799 jump DOCKER-ISOLATION-STAGE-2
+		iifname "br-88ded7088275" oifname != "br-88ded7088275" counter packets 596 bytes 36816 jump DOCKER-ISOLATION-STAGE-2
+		counter packets 67668 bytes 119715166 return
+	}
+
+	chain DOCKER-ISOLATION-STAGE-2 {
+		oifname "br-46b699d0a4fe" counter packets 0 bytes 0 drop
+		oifname "docker0" counter packets 0 bytes 0 drop
+		oifname "br-88ded7088275" counter packets 0 bytes 0 drop
+		counter packets 27186 bytes 1615320 return
+	}
+
+	chain FORWARD {
+		type filter hook forward priority filter; policy drop;
+		counter packets 54690 bytes 103775984 jump DOCKER-USER
+		counter packets 54690 bytes 103775984 jump DOCKER-ISOLATION-STAGE-1
+		oifname "br-46b699d0a4fe" xt match conntrack counter packets 6890 bytes 20067112 accept
+		oifname "br-46b699d0a4fe" counter packets 20 bytes 1168 jump DOCKER
+		iifname "br-46b699d0a4fe" oifname != "br-46b699d0a4fe" counter packets 5477 bytes 360669 accept
+		iifname "br-46b699d0a4fe" oifname "br-46b699d0a4fe" counter packets 20 bytes 1168 accept
+		oifname "docker0" xt match conntrack counter packets 25494 bytes 82430236 accept
+		oifname "docker0" counter packets 0 bytes 0 jump DOCKER
+		iifname "docker0" oifname != "docker0" counter packets 16809 bytes 916799 accept
+		iifname "docker0" oifname "docker0" counter packets 0 bytes 0 accept
+		oifname "br-88ded7088275" xt match conntrack counter packets 1614 bytes 1396219 accept
+		oifname "br-88ded7088275" counter packets 11 bytes 660 jump DOCKER
+		iifname "br-88ded7088275" oifname != "br-88ded7088275" counter packets 596 bytes 36816 accept
+		iifname "br-88ded7088275" oifname "br-88ded7088275" counter packets 11 bytes 660 accept
+	}
+
+	chain DOCKER-USER {
+		counter packets 67668 bytes 119715166 return
+	}
+}
+
+#+end_src
+#+end_nftables
+
+#+ATTR_REVEAL: :frag appear :frag_idx 3
+#+begin_nat
+#+begin_example shell :exports both :results verbatim
+iptables --table nat --numeric --verbose --list
+#+end_example
+
+#+RESULTS:
+#+begin_src routeros
+Chain PREROUTING (policy ACCEPT 0 packets, 0 bytes)
+ pkts bytes target     prot opt in     out     source               destination
+   60  4222 DOCKER     all  --  *      *       0.0.0.0/0            0.0.0.0/0            ADDRTYPE match dst-type LOCAL
+
+Chain INPUT (policy ACCEPT 0 packets, 0 bytes)
+ pkts bytes target     prot opt in     out     source               destination
+
+Chain OUTPUT (policy ACCEPT 0 packets, 0 bytes)
+ pkts bytes target     prot opt in     out     source               destination
+   18  1152 DOCKER     all  --  *      *       0.0.0.0/0           !127.0.0.0/8          ADDRTYPE match dst-type LOCAL
+
+Chain POSTROUTING (policy ACCEPT 0 packets, 0 bytes)
+ pkts bytes target     prot opt in     out     source               destination
+  103  6411 MASQUERADE  all  --  *      !br-46b699d0a4fe  10.42.10.0/24        0.0.0.0/0
+   18  1080 MASQUERADE  all  --  *      !docker0  172.26.0.0/24        0.0.0.0/0
+   11   684 MASQUERADE  all  --  *      !br-88ded7088275  172.18.0.0/16        0.0.0.0/0
+    0     0 MASQUERADE  tcp  --  *      *       10.42.10.103         10.42.10.103         tcp dpt:80
+    0     0 MASQUERADE  tcp  --  *      *       10.42.10.101         10.42.10.101         tcp dpt:80
+    0     0 MASQUERADE  tcp  --  *      *       10.42.10.102         10.42.10.102         tcp dpt:80
+
+Chain DOCKER (2 references)
+ pkts bytes target     prot opt in     out     source               destination
+    0     0 RETURN     all  --  br-46b699d0a4fe *       0.0.0.0/0            0.0.0.0/0
+    0     0 RETURN     all  --  docker0 *       0.0.0.0/0            0.0.0.0/0
+    0     0 RETURN     all  --  br-88ded7088275 *       0.0.0.0/0            0.0.0.0/0
+    0     0 DNAT       tcp  --  !br-46b699d0a4fe *       0.0.0.0/0            0.0.0.0/0            tcp dpt:8103 to:10.42.10.103:80
+    0     0 DNAT       tcp  --  !br-46b699d0a4fe *       0.0.0.0/0            0.0.0.0/0            tcp dpt:8101 to:10.42.10.101:80
+    0     0 DNAT       tcp  --  !br-46b699d0a4fe *       0.0.0.0/0            0.0.0.0/0            tcp dpt:8102 to:10.42.10.102:80
+
+#+end_src
+#+end_nat
+#+end_packets
 * Cloud
 
 (AWS Specific, but other providers have comparable)
