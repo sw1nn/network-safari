@@ -4,6 +4,7 @@
 #+Author: Neale Swinnerton
 #+Date: 2023-01-18
 #+REVEAL_PLUGINS: (notes highlight)
+#+EXPORT_FILE_NAME: presentation/index.html
 #+REVEAL_INIT_OPTIONS: width:1500, slideNumber:true, controlsLayout: 'edges'
 #+REVEAL_TITLE_SLIDE_BACKGROUND: ./img/title2-darker.png
 #+REVEAL_TITLE_SLIDE_OPACITY: 0.2
