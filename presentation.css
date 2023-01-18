@@ -1,4 +1,9 @@
 .reveal .code-wrapper code {
-    font-size: 0.55em !important;
+    font-size: 0.85em !important;
     line-height:1.2em !important;
+}
+
+.reveal .r-stack>* {
+ grid-area:1/1;
+ margin:20px;
 }

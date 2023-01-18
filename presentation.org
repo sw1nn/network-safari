@@ -1,10 +1,10 @@
 #+OPTIONS: num:nil toc:1 timestamp:nil
 #+Title: Networks for developing
-#+Subtitle: Putting the *works* into networks
+#+Subtitle: Putting the "*works"* into developer networks
 #+Author: Neale Swinnerton
 #+Date: 2023-01-18
-#+REVEAL_PLUGINS: (notes highlight)
-#+REVEAL_INIT_OPTIONS: slideNumber:true
+#+REVEAL_PLUGINS: (highlight)
+#+REVEAL_INIT_OPTIONS: width:1500, slideNumber:true, controlsLayout: 'edges'
 #+REVEAL_TITLE_SLIDE_BACKGROUND: ./img/title2-darker.png
 #+REVEAL_TITLE_SLIDE_OPACITY: 0.2
 #+REVEAL_DEFAULT_SLIDE_BACKGROUND_POSITION: right
@@ -15,11 +15,25 @@
 #+REVEAL_TOC_SLIDE_BACKGROUND_OPACITY: 0.2
 #+REVEAL_EXTRA_CSS: ./presentation.css
 #+REVEAL_THEME: solarized
+#+REVEAL_MARGIN: 0.1
 
 * Prerequisites
-   + =net-tools= package ( =ifconfig(8)=, =route(8)=, =arp(8)= and =netstat(1)= et al.) has been deprecated for over 10 years.
-   + prefer =iproute2= package. All functions of net-tools and more are available.
-   + Standardised interface and output. Also ~--json~ option makes parsing nicer.
+   + =net-tools= package has been deprecated for over 10 years.
+     - =ifconfig(8)=
+     - =route(8)=
+     - =arp(8)=
+     - =netstat(1)=
+   #+REVEAL: split:t
+   + prefer =iproute2= package.
+   + =ip= command is 'swiss army knife' of tools for querying/modifying network interfaces
+    + Standardised interface and output. Also ~--json~ option makes parsing nicer.
+    + Note that these tools are generally wrappers around =/sys/class/net/*= which can be useful in the absence of these tools in prod envs.
+   #+REVEAL: split:t
+   + =tcpdump= - cli (libpcap) packet analyzer
+   + =wireshark= - gui (libpcap) packet analyzer
+   + =ssh + tcpdump + wireshark= - analyze remote packets locally in a gui.
+   + Aside - discovered clj wrapper for libpcap
+     https://github.com/ruedigergad/clj-net-pcap
 
 * Terminology
   :PROPERTIES:
@@ -29,11 +43,16 @@
   :reveal_background_opacity: 0.2
   :END:
 
-  + =ip link=
+** =ip link=
    #+ATTR_HTML: :class r-stack
    #+BEGIN_ip_link
    #+ATTR_REVEAL: :frag fade-in-then-out :frag_idx 1
-   #+begin_src dns
+   #+BEGIN_link1
+   #+begin_example shell :wrap src routeros :exports both :results verbatim
+      ip link show
+   #+end_example
+
+   #+begin_src routeros
    1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN mode DEFAULT group default qlen 1000
        link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
    2: wg0: <POINTOPOINT,NOARP> mtu 1420 qdisc noop state DOWN mode DEFAULT group default qlen 1000
@@ -46,9 +65,14 @@
    5: tun0: <POINTOPOINT,MULTICAST,NOARP,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UNKNOWN mode DEFAULT group default qlen 500
        link/none
    #+end_src
+   #+END_link1
 
-   #+ATTR_REVEAL: :frag appear :frag_idx 2
-   #+name: with_docker
+   #+ATTR_REVEAL: :frag fade-in-then-out :frag_idx 2
+   #+BEGIN_link2
+   #+begin_example shell :wrap src routeros :exports both :results verbatim
+      ip link show #when docker running
+   #+end_example
+
    #+begin_src routeros
    1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN mode DEFAULT group default qlen 1000
        link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
@@ -68,69 +92,270 @@
    8: docker0: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 1500 qdisc noqueue state DOWN mode DEFAULT group default
        link/ether 02:42:38:a1:bf:e9 brd ff:ff:ff:ff:ff:ff
    #+end_src
-  #+END_ip_link
 
-  #+REVEAL: split:t
-  + ip addr show [devname]
-   #+ATTR_HTML: :class r-stack
-   #+BEGIN_ip_addr
-   #+begin_src shell :wrap src routeros :exports results :results verbatim
-   ip addr show wlo1
+   #+END_link2
+
+   #+ATTR_REVEAL: :frag appear :frag_idx 3
+   #+BEGIN_link3
+   #+begin_src shell :wrap src json :exports both :results verbatim
+      ip --pretty --json link show enp88s0 # also see --details flag
    #+end_src
 
+   #+RESULTS:
+   #+begin_src json
+   [ {
+	   "ifindex": 3,
+	   "ifname": "enp88s0",
+	   "flags": [ "BROADCAST","MULTICAST","UP","LOWER_UP" ],
+	   "mtu": 1500,
+	   "qdisc": "mq",
+	   "operstate": "UP",
+	   "linkmode": "DEFAULT",
+	   "group": "default",
+	   "txqlen": 1000,
+	   "link_type": "ether",
+	   "address": "48:21:0b:36:d3:08",
+	   "broadcast": "ff:ff:ff:ff:ff:ff"
+       } ]
+   #+end_src
+   #+END_link3
+   #+END_ip_link
+
+** =ip addr show [devname]=
+   #+ATTR_HTML: :class r-stack
+   #+BEGIN_ip_addr
    #+ATTR_REVEAL: :frag fade-in-then-out :frag_idx 1
+   #+BEGIN_wlo1
+   #+begin_src shell :wrap src routeros :exports both :results verbatim
+    ip addr show dev wlo1
+   #+end_src
+
+   #+ATTR_HTML: :class ip_results
    #+RESULTS:
    #+begin_src routeros
    4: wlo1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP group default qlen 1000
        link/ether 84:7b:57:20:f9:54 brd ff:ff:ff:ff:ff:ff
        altname wlp0s20f3
        inet 192.168.1.177/24 metric 1024 brd 192.168.1.255 scope global dynamic wlo1
-	  valid_lft 81726sec preferred_lft 81726sec
+	  valid_lft 84477sec preferred_lft 84477sec
        inet6 2a00:23c7:621c:f201:867b:57ff:fe20:f954/64 scope global dynamic mngtmpaddr noprefixroute
-	  valid_lft 272sec preferred_lft 92sec
+	  valid_lft 262sec preferred_lft 82sec
        inet6 fe80::867b:57ff:fe20:f954/64 scope link
 	  valid_lft forever preferred_lft forever
    #+end_src
-
-   #+begin_src shell :wrap src routeros :exports results :results verbatim
-   ip addr show tun0
-   #+end_src
+   #+END_wlo1
 
    #+ATTR_REVEAL: :frag fade-in-then-out :frag_idx 2
+   #+begin_tun0
+
+   #+begin_src shell :wrap src routeros :exports both :results verbatim
+    ip addr show dev tun0
+   #+end_src
+
    #+RESULTS:
    #+begin_src routeros
    5: tun0: <POINTOPOINT,MULTICAST,NOARP,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UNKNOWN group default qlen 500
        link/none
-       inet 172.16.146.92/26 brd 172.16.146.127 scope global tun0
+       inet 172.16.146.116/26 brd 172.16.146.127 scope global tun0
 	  valid_lft forever preferred_lft forever
-       inet6 fe80::25a1:f375:b66b:8879/64 scope link stable-privacy
+       inet6 fe80::a9bc:8cdc:23b7:7607/64 scope link stable-privacy
 	  valid_lft forever preferred_lft forever
    #+end_src
+   #+end_tun0
 
-   #+begin_src shell :wrap src routeros :exports results :results verbatim
-   ip addr show wg0
+   #+ATTR_REVEAL: :frag fade-in-then-out :frag_idx 3
+   #+BEGIN_wg0
+   #+begin_src shell :wrap src routeros :exports both :results verbatim
+    ip addr show dev wg0
    #+end_src
 
-   #+ATTR_REVEAL: :frag appear :frag_idx 3
    #+RESULTS:
    #+begin_src routeros
-   2: wg0: <POINTOPOINT,NOARP> mtu 1420 qdisc noop state DOWN group default qlen 1000
+   2: wg0: <POINTOPOINT,NOARP,UP,LOWER_UP> mtu 1420 qdisc noqueue state UNKNOWN group default qlen 1000
        link/none
+       inet 10.9.0.7/24 metric 512 scope global wg0
+	  valid_lft forever preferred_lft forever
    #+end_src
+   #+END_wg0
+
+   #+ATTR_REVEAL: :frag fade-in-then-out :frag_idx 4
+   #+BEGIN_enp88s0
+   #+begin_src shell :wrap src routeros :exports both :results verbatim
+    ip addr show dev enp88s0
+   #+end_src
+
+   #+RESULTS:
+   #+begin_src routeros
+   3: enp88s0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc mq state UP group default qlen 1000
+       link/ether 48:21:0b:36:d3:08 brd ff:ff:ff:ff:ff:ff
+       inet 192.168.1.99/24 metric 512 brd 192.168.1.255 scope global dynamic enp88s0
+	  valid_lft 62003sec preferred_lft 62003sec
+       inet6 2a00:23c7:621c:f201:4a21:bff:fe36:d308/64 scope global dynamic mngtmpaddr noprefixroute
+	  valid_lft 295sec preferred_lft 115sec
+       inet6 fe80::4a21:bff:fe36:d308/64 scope link
+	  valid_lft forever preferred_lft forever
+   #+end_src
+   #+END_enp88s0
+
+   #+ATTR_REVEAL: :frag appear :frag_idx 5
+   #+BEGIN_sipcalc
+   #+begin_src shell :wrap src routeros :exports both :results verbatim
+    sipcalc 172.16.146.116/26
+   #+end_src
+
+   #+RESULTS:
+   #+begin_src routeros
+   -[ipv4 : 172.16.146.116/26] - 0
+
+   [CIDR]
+   Host address		- 172.16.146.116
+   Host address (decimal)	- 2886767220
+   Host address (hex)	- AC109274
+   Network address		- 172.16.146.64
+   Network mask		- 255.255.255.192
+   Network mask (bits)	- 26
+   Network mask (hex)	- FFFFFFC0
+   Broadcast address	- 172.16.146.127
+   Cisco wildcard		- 0.0.0.63
+   Addresses in network	- 64
+   Network range		- 172.16.146.64 - 172.16.146.127
+   Usable range		- 172.16.146.65 - 172.16.146.126
+
+   -
+   #+end_src
+   #+END_sipcalc
    #+END_ip_addr
 
-  #+REVEAL: split:t
-  + protocols
-  #+REVEAL: split:t
-  + routes
-  #+REVEAL: split:t
-  + bridges
-  #+REVEAL: split:t
-  + tun devices
-  #+REVEAL: split:t
-  + Miscellaneous
-    - =MTU= =QDISC= =QLEN=
-    - =SO_LINGER= =SO_NODELAY=
+** ip route
+   #+ATTR_HTML: :class r-stack
+   #+BEGIN_ip_route
+
+   #+ATTR_REVEAL: :frag fade-in-then-out :frag_idx 1
+   #+BEGIN_route1
+    #+begin_src sh :wrap src routeros :exports both :results verbatim
+      ip route show | grep -v tun0
+    #+end_src
+
+    #+RESULTS:
+    #+begin_src routeros
+    default via 192.168.1.254 dev enp88s0 proto dhcp src 192.168.1.99 metric 512
+    default via 192.168.1.254 dev wlo1 proto dhcp src 192.168.1.177 metric 1024
+    10.9.0.0/24 dev wg0 proto kernel scope link src 10.9.0.7 metric 512
+    10.42.10.0/24 dev br-1a1f85fce263 proto kernel scope link src 10.42.10.1
+    172.18.0.0/16 dev br-88ded7088275 proto kernel scope link src 172.18.0.1 linkdown
+    172.26.0.0/24 dev docker0 proto kernel scope link src 172.26.0.1 linkdown
+    192.168.1.0/24 dev enp88s0 proto kernel scope link src 192.168.1.99 metric 512
+    192.168.1.0/24 dev wlo1 proto kernel scope link src 192.168.1.177 metric 1024
+    192.168.1.254 dev enp88s0 proto dhcp scope link src 192.168.1.99 metric 512
+    192.168.1.254 dev wlo1 proto dhcp scope link src 192.168.1.177 metric 1024
+    192.168.2.0/24 dev wg0 scope link
+    213.218.143.135 via 192.168.1.254 dev enp88s0
+    #+end_src
+   #+END_route1
+
+   #+ATTR_REVEAL: :frag appear :frag_idx 2
+   #+BEGIN_route2
+    #+begin_src sh :wrap src routeros :exports both :results verbatim
+      routel | grep -v tun0
+    #+end_src
+
+    #+RESULTS:
+    #+begin_src routeros
+    Dst             Gateway         Prefsrc         Protocol Scope   Dev              Table
+    default         192.168.1.254   192.168.1.99    dhcp             enp88s0
+    default         192.168.1.254   192.168.1.177   dhcp             wlo1
+    10.42.10.0/24                   10.42.10.1      kernel   link    br-1a1f85fce263
+    172.18.0.0/16                   172.18.0.1      kernel   link    br-88ded7088275
+    172.26.0.0/24                   172.26.0.1      kernel   link    docker0
+    192.168.1.0/24                  192.168.1.99    kernel   link    enp88s0
+    192.168.1.0/24                  192.168.1.177   kernel   link    wlo1
+    192.168.1.254                   192.168.1.99    dhcp     link    enp88s0
+    192.168.1.254                   192.168.1.177   dhcp     link    wlo1
+    213.218.143.135 192.168.1.254                                    enp88s0
+    10.42.10.1                      10.42.10.1      kernel   host    br-1a1f85fce263  local
+    10.42.10.255                    10.42.10.1      kernel   link    br-1a1f85fce263  local
+    127.0.0.0/8                     127.0.0.1       kernel   host    lo               local
+    127.0.0.1                       127.0.0.1       kernel   host    lo               local
+    127.255.255.255                 127.0.0.1       kernel   link    lo               local
+    172.18.0.1                      172.18.0.1      kernel   host    br-88ded7088275  local
+    172.18.255.255                  172.18.0.1      kernel   link    br-88ded7088275  local
+    172.26.0.1                      172.26.0.1      kernel   host    docker0          local
+    172.26.0.255                    172.26.0.1      kernel   link    docker0          local
+    192.168.1.99                    192.168.1.99    kernel   host    enp88s0          local
+    192.168.1.177                   192.168.1.177   kernel   host    wlo1             local
+    192.168.1.255                   192.168.1.99    kernel   link    enp88s0          local
+    192.168.1.255                   192.168.1.177   kernel   link    wlo1             local
+    #+end_src
+    #+END_route2
+    #+END_ip_route
+    
+** bridges
+#+begin_src sh :wrap src routeros :exports both :results verbatim
+ip link show type bridge
+#+end_src
+
+#+RESULTS:
+: 6: br-1a1f85fce263: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 1500 qdisc noqueue state DOWN mode DEFAULT group default
+:     link/ether 02:42:cd:61:52:96 brd ff:ff:ff:ff:ff:ff
+: 7: docker0: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 1500 qdisc noqueue state DOWN mode DEFAULT group default
+:     link/ether 02:42:55:a7:03:b0 brd ff:ff:ff:ff:ff:ff
+: 8: br-88ded7088275: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 1500 qdisc noqueue state DOWN mode DEFAULT group default
+:     link/ether 02:42:8b:26:25:07 brd ff:ff:ff:ff:ff:ff
+
+#+begin_src shell :wrap src routeros :exports both :results verbatim
+docker network ls
+#+end_src
+
+#+RESULTS:
+#+begin_src routeros
+NETWORK ID     NAME                  DRIVER    SCOPE
+88ded7088275   Eiffel-strapi         bridge    local
+9ce342a1ce54   bridge                bridge    local
+cb20fdb51056   host                  host      local
+1a1f85fce263   network-safari_net0   bridge    local
+70d3f12412e2   none                  null      local
+#+end_src
+
+** protocols
+     | UDP  | connectionless, lossy                                      |
+     | TCP  | connection-oriented, congestion-controlled, reliable       |
+     | ICMP | control protocol, more important for ipv6 (ping uses this) |
+     | IGMP | group control protocol, used for multicast                 |
+     | DHCP | host configuration protocol - dynamic IP, routes etc.      |
+     | NTP  | Network time protocol
+
+#+REVEAL: split:t
+     | HTTP(S)                   | Old faithful (TCP, TLS)                                            |
+     | QUIC (colloquially TCP/2) | low latency, multiplexed, error-corrected, reliable, UDP/TLS based |
+     | HTTP/3                    | HTTP over QUIC                                                     |
+
+
+*** DHCP - Dynamic Host Configuration Protocol
+  :PROPERTIES:
+  :reveal_background: ./img/dependency.png
+  :reveal_background_size: 800px
+  :reveal_background_position: right
+  :reveal_background_opacity: 0.2
+  :END:
+
+    - IP address leases
+    - Gateways
+    - Hostname
+    - Domain name
+    - Domain name server
+    - Domain search lists
+    - Static Routes
+    - Time Servers
+    - Time Zone
+
+** Miscellaneous
+    - link parameters
+      + =MTU=
+      + =QDISC=
+      + =QLEN=
+    - socket options
+      + =SO_LINGER=
+      + =SO_NODELAY=
 
 * Why is it DNS?
   :PROPERTIES:
@@ -155,51 +380,48 @@
     + We trusted back then. What is Authority? (DNSSec introduces crypto - another problem)
 
 ** What is stored in DNS?
-#+BEGIN_small_code
-#+begin_src shell :exports both :results verbatim :wrap src dns
+#+begin_example shell :exports both :results verbatim :wrap src dns
 dig +nocomments any sw1nn.com | sort -r -k 1 -k 4
-#+end_src
+#+end_example
 
 #+RESULTS:
 #+begin_src dns
-;; WHEN: Sun Jan 08 16:21:34 GMT 2023
+;; WHEN: Wed Jan 18 09:52:27 GMT 2023
 ;sw1nn.com.			IN	ANY
-sw1nn.com.		946	IN	NS	ns-895.awsdns-47.net.
-sw1nn.com.		946	IN	NS	ns-427.awsdns-53.com.
-sw1nn.com.		946	IN	NS	ns-1668.awsdns-16.co.uk.
-sw1nn.com.		946	IN	NS	ns-1409.awsdns-48.org.
-sw1nn.com.		946	IN	MX	5 alt2.aspmx.l.google.com.
-sw1nn.com.		946	IN	MX	5 alt1.aspmx.l.google.com.
-sw1nn.com.		946	IN	MX	1 aspmx.l.google.com.
-sw1nn.com.		946	IN	MX	10 alt4.aspmx.l.google.com.
-sw1nn.com.		946	IN	MX	10 alt3.aspmx.l.google.com.
-sw1nn.com.		900	IN	SOA	ns-895.awsdns-47.net. awsdns-hostmaster.amazon.com. 1 7200 900 1209600 86400
-sw1nn.com.		60	IN	A	143.204.68.64
-sw1nn.com.		60	IN	A	143.204.68.6
-sw1nn.com.		60	IN	A	143.204.68.19
-sw1nn.com.		60	IN	A	143.204.68.109
-sw1nn.com.		300	IN	TXT	"v=spf1 a:gw0.sw1nn.com include:_spf.google.com -all"
-sw1nn.com.		300	IN	TXT	"keybase-site-verification=Sbl5DIqMz2YhOzwJRJ-42cuCc_5bi-IqcDgDoLI4xxY"
-sw1nn.com.		300	IN	TXT	"google-site-verification=j9z8EzWtUwDq8euHd3e6BT9zcWMh7RpGasi4ldaXqeA"
-sw1nn.com.		300	IN	CAA	0 issuewild ";"
-sw1nn.com.		300	IN	CAA	0 issue "letsencrypt.org"
-sw1nn.com.		300	IN	CAA	0 issue "awstrust.com"
-sw1nn.com.		300	IN	CAA	0 issue "amazontrust.com"
-sw1nn.com.		300	IN	CAA	0 issue "amazon.com"
-sw1nn.com.		300	IN	CAA	0 issue "amazonaws.com"
+sw1nn.com.		873	IN	SOA	ns-895.awsdns-47.net. awsdns-hostmaster.amazon.com. 1 7200 900 1209600 86400
+sw1nn.com.		873	IN	NS	ns-895.awsdns-47.net.
+sw1nn.com.		873	IN	NS	ns-427.awsdns-53.com.
+sw1nn.com.		873	IN	NS	ns-1668.awsdns-16.co.uk.
+sw1nn.com.		873	IN	NS	ns-1409.awsdns-48.org.
+sw1nn.com.		873	IN	MX	5 alt2.aspmx.l.google.com.
+sw1nn.com.		873	IN	MX	5 alt1.aspmx.l.google.com.
+sw1nn.com.		873	IN	MX	1 aspmx.l.google.com.
+sw1nn.com.		873	IN	MX	10 alt4.aspmx.l.google.com.
+sw1nn.com.		873	IN	MX	10 alt3.aspmx.l.google.com.
+sw1nn.com.		59	IN	A	143.204.68.64
+sw1nn.com.		59	IN	A	143.204.68.6
+sw1nn.com.		59	IN	A	143.204.68.19
+sw1nn.com.		59	IN	A	143.204.68.109
+sw1nn.com.		299	IN	TXT	"v=spf1 a:gw0.sw1nn.com include:_spf.google.com -all"
+sw1nn.com.		299	IN	TXT	"keybase-site-verification=Sbl5DIqMz2YhOzwJRJ-42cuCc_5bi-IqcDgDoLI4xxY"
+sw1nn.com.		299	IN	TXT	"google-site-verification=j9z8EzWtUwDq8euHd3e6BT9zcWMh7RpGasi4ldaXqeA"
+sw1nn.com.		299	IN	CAA	0 issuewild ";"
+sw1nn.com.		299	IN	CAA	0 issue "letsencrypt.org"
+sw1nn.com.		299	IN	CAA	0 issue "awstrust.com"
+sw1nn.com.		299	IN	CAA	0 issue "amazontrust.com"
+sw1nn.com.		299	IN	CAA	0 issue "amazon.com"
+sw1nn.com.		299	IN	CAA	0 issue "amazonaws.com"
 ;; SERVER: 127.0.0.53#53(127.0.0.53) (TCP)
-;; Query time: 60 msec
+;; Query time: 16 msec
 ;; MSG SIZE  rcvd: 826
 ;; global options: +cmd
-; <<>> DiG 9.18.10 <<>> +nocomments +rrcomments any sw1nn.com
+; <<>> DiG 9.18.10 <<>> +nocomments any sw1nn.com
 
 
 #+end_src
-#+end_small_code
 
 ** Configuring your local DNS server
 - How does your local machine resolve names?
-  #+BEGIN_small_code
   #+caption: /etc/nsswitch.conf
   #+begin_src src conf
   ...
@@ -216,31 +438,31 @@ sw1nn.com.		300	IN	CAA	0 issue "amazonaws.com"
       nameserver 172.20.0.2
       search home lan
   #+end_src
-  #+end_small_code
 
   #+REVEAL: split: t
-  #+BEGIN_small_code
   #+begin_src sh :exports results :results output :wrap src diff
     diff -uw \
+	 --label resolv.conf \
+	 --label stub-resolv.conf \
 	 <(grep -v '#' /run/systemd/resolve/resolv.conf)  \
 	 <(grep -v '#' /run/systemd/resolve/stub-resolv.conf) || true
   #+end_src
 
-  #+caption: diff -uw /run/systemd/resolve/resolv.conf /run/systemd/resolve/stub-resolv.conf # (comments elided)
+  #+caption: /run/systemd/resolve/* # (comments elided)
   #+RESULTS:
   #+begin_src diff
-  --- /dev/fd/63	2023-01-08 15:07:36.546809423 +0000
-  +++ /dev/fd/62	2023-01-08 15:07:36.546809423 +0000
-  @@ -1,4 +1,4 @@
+  --- resolv.conf
+  +++ stub-resolv.conf
+  @@ -1,6 +1,4 @@
 
   -nameserver 192.168.1.254
   -nameserver fe80::e675:dcff:fec3:6f93%4
+  -nameserver 192.168.1.254
+  -nameserver fe80::e675:dcff:fec3:6f93%3
   +nameserver 127.0.0.53
   +options edns0 trust-ad
-   search blandford paxton home
+   search ad.corp gcp.oscaro.internal oscaro.be oscaro.com oscaro.de oscaro.es oscaro.media oscaro.pt oscaro.team oscaroad.com home blandford paxton
   #+end_src
-
-  #+END_small_code
 
   #+REVEAL: split: t
   #+name: resolvectl_status
@@ -248,7 +470,6 @@ sw1nn.com.		300	IN	CAA	0 issue "amazonaws.com"
   resolvectl status
   #+end_src
 
-  #+BEGIN_small_code
   #+RESULTS: resolvectl_status
   #+begin_src sh
   Global
@@ -282,67 +503,77 @@ sw1nn.com.		300	IN	CAA	0 issue "amazonaws.com"
 	  DNS Domain: ad.corp gcp.oscaro.internal oscaro.be oscaro.com oscaro.de
 		      oscaro.es oscaro.media oscaro.pt oscaro.team oscaroad.com
   #+end_src
-  #+END_small_code
-  #+REVEAL: split: t
-  #+BEGIN_DIV
-  =multicast DNS=
-  #+END_DIV
 
-* graph
-#+begin_src dot :file img/graph.svg :exports results
-  digraph G {
-    node_1;
-    node_2;
-    node_1 -> node_2 [style=dotted];
-  }
+** =multicast DNS= (mDNS) / =Link Local Multicast Name Resolution= (=LLMNR=)
 
-#+end_src
-
-#+RESULTS:
-[[file:img/graph.svg]]
+   - serverless name resolution
+   - implemented by Bonjour (Apple), avahi (linux)
+   - local network only (by default)
+   - Packet containing query sent to multicast address 224.0.0.251 (UDP 5353)
+   - Often used with DNS-DS (DNS service Discovery) for 'zeroconf'
+     discovery (e.g. this is how your phone finds local printers)
+   - NetBIOS roughly analogous in windows, but MS moving to mDNS
 
 
-#+BEGIN_SRC ditaa :file img/ditaatest1.png :cmdline -s 0.8
+* Packet Capture FTW
+#+BEGIN_SRC ditaa :file img/network-diagram.png :cmdline -s 0.8
 
-    +----------------------+         +------------------+----+
-    | This is a box   |    +---------+  and this is     |    |
-    |                 |    |         |  another         |    |
-    |                 |    |         |                  |    |
-    |                 |    |         |                  |    |            +-------+
-    +-------+--------------+         +------------------+----+		  |       |
-            |								  |       |
-            |								  | {mo}  |
-            :           /------------------------------\      |      ^	  +-------+
-            |           |                              |      |      |
-            |           |   and yet another, but       |      |      |
-            +---------->+   with round corners         |      |      |    +-------+
-                        |   o list item 1              |      |      |    |       |
-                        |   o list item 2              |      |      |    |       |
-                        \------------------------------/      V      |    | {tr}  |
-                                                                          +-------+
-
-      +----------+       +--------------+       +---------------+    +-------+    +-------+
-      | Storage  |       | Document     |       | Input/Output  |    |       |    |       |
-      |          |       |              |       |               |    |       |    |       |
-      | cGRE     +-------+ cYEL         +---=---+ cRED          |    | {o}   |    | {c}   |
-      |          |       |              |       |               |    +-------+    +-------+
-      | {s}      |       | {d}          |       | {io}          |
-      +----------+       +--------------+       +---------------+
-
-
+  +--------------+                    +--------------+
+  | host 1       |                    | host 3       |
+  | cRED         |<-------------------| cBLU         |
+  | 10.42.10.101 |                    | 10.42.10.103 |--+          /--------------\
+  |              |                    |              |  |          | dns0         |
+  +--------------+                    +--------------+  |          | cDDD         |
+    ^   |                                   ^           |          | {d}          |
+    |   |                                   |           |          | 10.42.10.254 |
+    |   |                                   |           |          \--------------/
+    |   |           +--------------+        |           |              ^  ^  ^
+    |   |           | host 2       |        |           |              |  |  |
+    |   +---------->| cGRE         |--------+           +------=-------+  |  |
+    |               | 10.42.10.102 |                                      |  |
+    |               |              |------------------=-------------------+  |
+    |               +--------------+                                         |
+    |                                                                        |
+    +-----------------------=------------------------------------------------+
   #+END_SRC
 
   #+RESULTS:
-  [[file:img/ditaatest1.png]]
+  [[file:img/network-diagram.png]]
 
-* iptables et al.
-#+begin_src shell
-  iptables -nvL
+* {ip,ip6,arp,eb}tables
 
-#+end_src
-* Packet Capture FTW
+- Allows manipulation of packets passing through a network interface.
+  + firewalling - block unwanted packets
+  + NAT - translate 'connections' from a subnet to another subnet
+    (typically from a private subnet to a public one). Maintains state
+    to allow response packets to be reverse translated.
+  + packet mangling - Change characteristics of packets on the fly
+    - change ports
+    - change addresses
+    - change flags
+- nftables replaces iptables et al., although iptables is still in wide use.
 
 * Cloud
+
+(AWS Specific, but other providers have comparable)
+
+- Same concepts apply in cloud envs, but sometimes 'off instance',
+  managed by API rather than CLI
+- VPC (Virtual Private Cloud)
+  + Subnets (public/private)
+  + provide DNS, Time services
+  + Internet Gateways
+  + NAT Instances
+#+REVEAL: split: t
+- Firewall
+  + Security Groups (Stateful) / Resource Level
+  + Network ACLs (Stateless) / Subnet Level - MTU negotiation rules maybe
+- DHCP option sets - custom DNS, time servers
+- VPC Flow logs
+  + Aggregated data (not as helpful for live debugging)
+  + Some 'meta' traffic not logged (e.g. AWS Instance Metadata Service, License activation etc)
+
+
 
 * Wrap Up
 :PROPERTIES:

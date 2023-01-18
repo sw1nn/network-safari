@@ -1,0 +1,11 @@
+#!/bin/sh
+
+[ -z "$SSH_CONNECTION" ] && exit
+
+ssh_connection_filter=$(echo $SSH_CONNECTION | awk '{ printf("not (tcp port %d and ip host %s and tcp port %d and ip host %s)", $2, $1, $4, $3) }')
+
+if [ -n "${@}" ]; then
+    extra_filter=" and ${@}"
+fi
+
+tcpdump -i eth0 -U -s0 -w - "$ssh_connection_filter${extra_filter}"

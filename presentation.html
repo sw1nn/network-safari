@@ -14,63 +14,86 @@
 <link rel="stylesheet" href="./reveal.js/dist/theme/solarized.css" id="theme"/>
 
 <link rel="stylesheet" href="./presentation.css"/>
-<link rel="stylesheet" href="./reveal.js/plugin/highlight/zenburn.css"/>
-<!-- If the query includes 'print-pdf', include the PDF print sheet -->
-<script>
-    if( window.location.search.match( /print-pdf/gi ) ) {
-        var link = document.createElement( 'link' );
-        link.rel = 'stylesheet';
-        link.type = 'text/css';
-        link.href = './reveal.js/css/print/pdf.css';
-        document.getElementsByTagName( 'head' )[0].appendChild( link );
-    }
-</script>
-</head>
+<link rel="stylesheet" href="./reveal.js/plugin/highlight/zenburn.css"/></head>
 <body>
 <div class="reveal">
 <div class="slides">
-<section id="sec-title-slide" data-background="./img/title2-darker.png"><h1 class="title">Networks for developing</h1><p class="subtitle">Putting the <b>works</b> into networks</p>
+<section id="sec-title-slide" data-background="./img/title2-darker.png"><h1 class="title">Networks for developing</h1><p class="subtitle">Putting the "<b>works"</b> into developer networks</p>
 <h2 class="author">Neale Swinnerton</h2><h2 class="date">2023-01-18</h2>
 </section>
 <section id="sec-table-of-contents" data-background="./img/agenda.png" data-background-size="800px" data-background-position="right" data-background-opacity="0.2"><div id="table-of-contents" role="doc-toc">
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents" role="doc-toc">
 <ul>
-<li><a href="#/slide-org78686c2">Prerequisites</a></li>
-<li><a href="#/slide-orge232750">Terminology</a></li>
-<li><a href="#/slide-org74d3d08">Why is it DNS?</a></li>
-<li><a href="#/slide-org6f10e63">graph</a></li>
-<li><a href="#/slide-orgd684f4a">iptables et al.</a></li>
-<li><a href="#/slide-org43f9bed">Packet Capture FTW</a></li>
-<li><a href="#/slide-org0d06378">Cloud</a></li>
+<li><a href="#/slide-orgd9f4012">Prerequisites</a></li>
+<li><a href="#/slide-org0c90ca3">Terminology</a></li>
+<li><a href="#/slide-orgc52e9d0">Why is it DNS?</a></li>
+<li><a href="#/slide-org152d132">Packet Capture FTW</a></li>
+<li><a href="#/slide-org91c99d1">{ip,ip6,arp,eb}tables</a></li>
+<li><a href="#/slide-org2dc7ae5">Cloud</a></li>
 </ul>
 </div>
 </div>
 </section>
 
 <section>
-<section id="slide-org78686c2" data-background-position="right" data-background-opacity="0.2">
-<h2 id="org78686c2">Prerequisites</h2>
+<section id="slide-orgd9f4012" data-background-position="right" data-background-opacity="0.2">
+<h2 id="orgd9f4012">Prerequisites</h2>
 <ul>
-<li><code>net-tools</code> package ( <code>ifconfig(8)</code>, <code>route(8)</code>, <code>arp(8)</code> and <code>netstat(1)</code> et al.) has been deprecated for over 10 years.</li>
-<li>prefer <code>iproute2</code> package. All functions of net-tools and more are available.</li>
+<li><code>net-tools</code> package has been deprecated for over 10 years.
+<ul>
+<li><code>ifconfig(8)</code></li>
+<li><code>route(8)</code></li>
+<li><code>arp(8)</code></li>
+<li><code>netstat(1)</code></li>
+
+</ul></li>
+
+</ul>
+</section>
+<section id="slide-orgd9f4012-split" data-background-position="right" data-background-opacity="0.2">
+
+<h2>Prerequisites</h2>
+<ul>
+<li>prefer <code>iproute2</code> package.</li>
+<li><code>ip</code> command is 'swiss army knife' of tools for querying/modifying network interfaces
+<ul>
 <li>Standardised interface and output. Also <code>--json</code> option makes parsing nicer.</li>
+<li>Note that these tools are generally wrappers around <code>/sys/class/net/*</code> which can be useful in the absence of these tools in prod envs.</li>
+
+</ul></li>
+
+</ul>
+</section>
+<section id="slide-orgd9f4012-split" data-background-position="right" data-background-opacity="0.2">
+
+<h2>Prerequisites</h2>
+<ul>
+<li><code>tcpdump</code> - cli (libpcap) packet analyzer</li>
+<li><code>wireshark</code> - gui (libpcap) packet analyzer</li>
+<li><code>ssh + tcpdump + wireshark</code> - analyze remote packets locally in a gui.</li>
+<li>Aside - discovered clj wrapper for libpcap
+<a href="https://github.com/ruedigergad/clj-net-pcap">https://github.com/ruedigergad/clj-net-pcap</a></li>
 
 </ul>
 
 </section>
 </section>
 <section>
-<section id="slide-orge232750" data-background="./img/terminology.jpg" data-background-size="800px" data-background-position="right" data-background-opacity="0.2">
-<h2 id="orge232750">Terminology</h2>
-<ul>
-<li><p>
-<code>ip link</code>
-</p>
-<div class="r-stack ip_link" id="orgb6763ee">
+<section id="slide-org0c90ca3" data-background="./img/terminology.jpg" data-background-size="800px" data-background-position="right" data-background-opacity="0.2">
+<h2 id="org0c90ca3">Terminology</h2>
+</section>
+<section id="slide-orgc58d238" data-background-position="right" data-background-opacity="0.2">
+<h3 id="orgc58d238"><code>ip link</code></h3>
+<div class="r-stack ip_link" id="orgd44674d">
+<div data-fragment-index="1" class="fragment fade-in-then-out link1" id="org7a18fd4">
+<pre class="example" id="org96db1d7">
+ip link show
+</pre>
+
 <div class="org-src-container">
 
-<pre  class="fragment fade-in-then-out" data-fragment-index="1"  ><code class="dns" >1: lo: &lt;LOOPBACK,UP,LOWER_UP&gt; mtu 65536 qdisc noqueue state UNKNOWN mode DEFAULT group default qlen 1000
+<pre   ><code class="routeros" >1: lo: &lt;LOOPBACK,UP,LOWER_UP&gt; mtu 65536 qdisc noqueue state UNKNOWN mode DEFAULT group default qlen 1000
     link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
 2: wg0: &lt;POINTOPOINT,NOARP&gt; mtu 1420 qdisc noop state DOWN mode DEFAULT group default qlen 1000
     link/none
@@ -84,9 +107,16 @@
 </code></pre>
 </div>
 
+</div>
+
+<div data-fragment-index="2" class="fragment fade-in-then-out link2" id="org5ae6b49">
+<pre class="example" id="org5fe3875">
+ip link show #when docker running
+</pre>
+
 <div class="org-src-container">
 
-<pre  class="fragment appear" data-fragment-index="2" id="with_docker" ><code class="routeros" >1: lo: &lt;LOOPBACK,UP,LOWER_UP&gt; mtu 65536 qdisc noqueue state UNKNOWN mode DEFAULT group default qlen 1000
+<pre   ><code class="routeros" >1: lo: &lt;LOOPBACK,UP,LOWER_UP&gt; mtu 65536 qdisc noqueue state UNKNOWN mode DEFAULT group default qlen 1000
     link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
 2: wg0: &lt;POINTOPOINT,NOARP&gt; mtu 1420 qdisc noop state DOWN mode DEFAULT group default qlen 1000
     link/none
@@ -106,98 +136,381 @@
 </code></pre>
 </div>
 
-</div></li>
+</div>
 
-</ul>
-
-</section>
-<section id="slide-orge232750-split" data-background="./img/terminology.jpg" data-background-size="800px" data-background-position="right" data-background-opacity="0.2">
-
-<h2>Terminology</h2>
-<ul>
-<li><p>
-ip addr show [devname]
-</p>
-<div class="r-stack ip_addr" id="org3b19942">
+<div data-fragment-index="3" class="fragment appear link3" id="orga218d4c">
 <div class="org-src-container">
 
-<pre  class="fragment fade-in-then-out" data-fragment-index="1"  ><code class="routeros" >4: wlo1: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc noqueue state UP group default qlen 1000
+<pre   ><code class="shell" >ip --pretty --json link show enp88s0 # also see --details flag
+</code></pre>
+</div>
+
+<div class="org-src-container">
+
+<pre   ><code class="json" >[ {
+        "ifindex": 3,
+        "ifname": "enp88s0",
+        "flags": [ "BROADCAST","MULTICAST","UP","LOWER_UP" ],
+        "mtu": 1500,
+        "qdisc": "mq",
+        "operstate": "UP",
+        "linkmode": "DEFAULT",
+        "group": "default",
+        "txqlen": 1000,
+        "link_type": "ether",
+        "address": "48:21:0b:36:d3:08",
+        "broadcast": "ff:ff:ff:ff:ff:ff"
+    } ]
+</code></pre>
+</div>
+
+</div>
+
+</div>
+
+</section>
+<section id="slide-orgad08be8" data-background-position="right" data-background-opacity="0.2">
+<h3 id="orgad08be8"><code>ip addr show [devname]</code></h3>
+<div class="r-stack ip_addr" id="org93832d7">
+<div data-fragment-index="1" class="fragment fade-in-then-out wlo1" id="orga136a57">
+<div class="org-src-container">
+
+<pre   ><code class="shell" >ip addr show dev wlo1
+</code></pre>
+</div>
+
+<div class="org-src-container">
+
+<pre   ><code class="routeros" >4: wlo1: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc noqueue state UP group default qlen 1000
     link/ether 84:7b:57:20:f9:54 brd ff:ff:ff:ff:ff:ff
     altname wlp0s20f3
     inet 192.168.1.177/24 metric 1024 brd 192.168.1.255 scope global dynamic wlo1
-       valid_lft 79772sec preferred_lft 79772sec
+       valid_lft 82274sec preferred_lft 82274sec
     inet6 2a00:23c7:621c:f201:867b:57ff:fe20:f954/64 scope global dynamic mngtmpaddr noprefixroute 
-       valid_lft 295sec preferred_lft 115sec
+       valid_lft 268sec preferred_lft 88sec
     inet6 fe80::867b:57ff:fe20:f954/64 scope link 
        valid_lft forever preferred_lft forever
 </code></pre>
 </div>
 
+</div>
+
+<div data-fragment-index="2" class="fragment fade-in-then-out tun0" id="orgeded983">
+<p>
+
+</p>
+
 <div class="org-src-container">
 
-<pre  class="fragment fade-in-then-out" data-fragment-index="2"  ><code class="routeros" >10: tun0: &lt;POINTOPOINT,MULTICAST,NOARP,UP,LOWER_UP&gt; mtu 1500 qdisc fq_codel state UNKNOWN group default qlen 500
-    link/none 
-    inet 172.16.146.85/26 brd 172.16.146.127 scope global tun0
-       valid_lft forever preferred_lft forever
-    inet6 fe80::27c6:6c2c:e4ed:c888/64 scope link stable-privacy 
-       valid_lft forever preferred_lft forever
+<pre   ><code class="shell" >ip addr show dev tun0
 </code></pre>
 </div>
 
 <div class="org-src-container">
 
-<pre  class="fragment appear" data-fragment-index="3"  ><code class="routeros" >2: wg0: &lt;POINTOPOINT,NOARP,UP,LOWER_UP&gt; mtu 1420 qdisc noqueue state UNKNOWN group default qlen 1000
+<pre   ><code class="routeros" >5: tun0: &lt;POINTOPOINT,MULTICAST,NOARP,UP,LOWER_UP&gt; mtu 1500 qdisc fq_codel state UNKNOWN group default qlen 500
+    link/none 
+    inet 172.16.146.116/26 brd 172.16.146.127 scope global tun0
+       valid_lft forever preferred_lft forever
+    inet6 fe80::a9bc:8cdc:23b7:7607/64 scope link stable-privacy 
+       valid_lft forever preferred_lft forever
+</code></pre>
+</div>
+
+</div>
+
+<div data-fragment-index="3" class="fragment fade-in-then-out wg0" id="org062081d">
+<div class="org-src-container">
+
+<pre   ><code class="shell" >ip addr show dev wg0
+</code></pre>
+</div>
+
+<div class="org-src-container">
+
+<pre   ><code class="routeros" >2: wg0: &lt;POINTOPOINT,NOARP,UP,LOWER_UP&gt; mtu 1420 qdisc noqueue state UNKNOWN group default qlen 1000
     link/none 
     inet 10.9.0.7/24 metric 512 scope global wg0
        valid_lft forever preferred_lft forever
 </code></pre>
 </div>
 
-</div></li>
+</div>
+
+<div data-fragment-index="4" class="fragment fade-in-then-out enp88s0" id="org4adf66f">
+<div class="org-src-container">
+
+<pre   ><code class="shell" >ip addr show dev enp88s0
+</code></pre>
+</div>
+
+<div class="org-src-container">
+
+<pre   ><code class="routeros" >3: enp88s0: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc mq state UP group default qlen 1000
+    link/ether 48:21:0b:36:d3:08 brd ff:ff:ff:ff:ff:ff
+    inet 192.168.1.99/24 metric 512 brd 192.168.1.255 scope global dynamic enp88s0
+       valid_lft 82165sec preferred_lft 82165sec
+    inet6 2a00:23c7:621c:f201:4a21:bff:fe36:d308/64 scope global dynamic mngtmpaddr noprefixroute 
+       valid_lft 268sec preferred_lft 88sec
+    inet6 fe80::4a21:bff:fe36:d308/64 scope link 
+       valid_lft forever preferred_lft forever
+</code></pre>
+</div>
+
+</div>
+
+<div data-fragment-index="5" class="fragment appear sipcalc" id="org1c43469">
+<div class="org-src-container">
+
+<pre   ><code class="shell" >sipcalc 172.16.146.116/26
+</code></pre>
+</div>
+
+<div class="org-src-container">
+
+<pre   ><code class="routeros" >-[ipv4 : 172.16.146.116/26] - 0
+
+[CIDR]
+Host address		- 172.16.146.116
+Host address (decimal)	- 2886767220
+Host address (hex)	- AC109274
+Network address		- 172.16.146.64
+Network mask		- 255.255.255.192
+Network mask (bits)	- 26
+Network mask (hex)	- FFFFFFC0
+Broadcast address	- 172.16.146.127
+Cisco wildcard		- 0.0.0.63
+Addresses in network	- 64
+Network range		- 172.16.146.64 - 172.16.146.127
+Usable range		- 172.16.146.65 - 172.16.146.126
+
+-
+</code></pre>
+</div>
+
+</div>
+
+</div>
+
+</section>
+<section id="slide-orgee19dc8" data-background-position="right" data-background-opacity="0.2">
+<h3 id="orgee19dc8">ip route</h3>
+<div class="r-stack ip_route" id="orgfc30e38">
+<p>
+
+</p>
+
+<div data-fragment-index="1" class="fragment fade-in-then-out route1" id="org418e1f6">
+<div class="org-src-container">
+
+<pre   ><code class="sh" >ip route show | grep -v tun0
+</code></pre>
+</div>
+
+<div class="org-src-container">
+
+<pre   ><code class="routeros" >default via 192.168.1.254 dev enp88s0 proto dhcp src 192.168.1.99 metric 512 
+default via 192.168.1.254 dev wlo1 proto dhcp src 192.168.1.177 metric 1024 
+10.9.0.0/24 dev wg0 proto kernel scope link src 10.9.0.7 metric 512 
+10.42.10.0/24 dev br-46b699d0a4fe proto kernel scope link src 10.42.10.1 
+172.18.0.0/16 dev br-88ded7088275 proto kernel scope link src 172.18.0.1 linkdown 
+172.26.0.0/24 dev docker0 proto kernel scope link src 172.26.0.1 linkdown 
+192.168.1.0/24 dev enp88s0 proto kernel scope link src 192.168.1.99 metric 512 
+192.168.1.0/24 dev wlo1 proto kernel scope link src 192.168.1.177 metric 1024 
+192.168.1.254 dev enp88s0 proto dhcp scope link src 192.168.1.99 metric 512 
+192.168.1.254 dev wlo1 proto dhcp scope link src 192.168.1.177 metric 1024 
+213.218.143.135 via 192.168.1.254 dev enp88s0 
+</code></pre>
+</div>
+
+</div>
+
+<div data-fragment-index="2" class="fragment appear route2" id="orga12b4b6">
+<div class="org-src-container">
+
+<pre   ><code class="sh" >routel | grep -v tun0
+</code></pre>
+</div>
+
+<div class="org-src-container">
+
+<pre   ><code class="routeros" >Dst             Gateway         Prefsrc         Protocol Scope   Dev              Table
+default         192.168.1.254   192.168.1.99    dhcp             enp88s0          
+default         192.168.1.254   192.168.1.177   dhcp             wlo1             
+10.9.0.0/24                     10.9.0.7        kernel   link    wg0              
+10.42.10.0/24                   10.42.10.1      kernel   link    br-46b699d0a4fe  
+172.18.0.0/16                   172.18.0.1      kernel   link    br-88ded7088275  
+172.26.0.0/24                   172.26.0.1      kernel   link    docker0          
+192.168.1.0/24                  192.168.1.99    kernel   link    enp88s0          
+192.168.1.0/24                  192.168.1.177   kernel   link    wlo1             
+192.168.1.254                   192.168.1.99    dhcp     link    enp88s0          
+192.168.1.254                   192.168.1.177   dhcp     link    wlo1             
+213.218.143.135 192.168.1.254                                    enp88s0          
+10.9.0.7                        10.9.0.7        kernel   host    wg0              local
+10.9.0.255                      10.9.0.7        kernel   link    wg0              local
+10.42.10.1                      10.42.10.1      kernel   host    br-46b699d0a4fe  local
+10.42.10.255                    10.42.10.1      kernel   link    br-46b699d0a4fe  local
+127.0.0.0/8                     127.0.0.1       kernel   host    lo               local
+127.0.0.1                       127.0.0.1       kernel   host    lo               local
+127.255.255.255                 127.0.0.1       kernel   link    lo               local
+172.18.0.1                      172.18.0.1      kernel   host    br-88ded7088275  local
+172.18.255.255                  172.18.0.1      kernel   link    br-88ded7088275  local
+172.26.0.1                      172.26.0.1      kernel   host    docker0          local
+172.26.0.255                    172.26.0.1      kernel   link    docker0          local
+192.168.1.99                    192.168.1.99    kernel   host    enp88s0          local
+192.168.1.177                   192.168.1.177   kernel   host    wlo1             local
+192.168.1.255                   192.168.1.99    kernel   link    enp88s0          local
+192.168.1.255                   192.168.1.177   kernel   link    wlo1             local
+</code></pre>
+</div>
+
+</div>
+
+</div>
+
+</section>
+<section id="slide-orge4e1004" data-background-position="right" data-background-opacity="0.2">
+<h3 id="orge4e1004">bridges</h3>
+<div class="org-src-container">
+
+<pre   ><code class="sh" >ip link show type bridge
+</code></pre>
+</div>
+
+<div class="org-src-container">
+
+<pre   ><code class="routeros" >7: docker0: &lt;NO-CARRIER,BROADCAST,MULTICAST,UP&gt; mtu 1500 qdisc noqueue state DOWN mode DEFAULT group default 
+    link/ether 02:42:55:a7:03:b0 brd ff:ff:ff:ff:ff:ff
+8: br-88ded7088275: &lt;NO-CARRIER,BROADCAST,MULTICAST,UP&gt; mtu 1500 qdisc noqueue state DOWN mode DEFAULT group default 
+    link/ether 02:42:8b:26:25:07 brd ff:ff:ff:ff:ff:ff
+108: br-46b699d0a4fe: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc noqueue state UP mode DEFAULT group default 
+    link/ether 02:42:2b:fc:9b:17 brd ff:ff:ff:ff:ff:ff
+</code></pre>
+</div>
+
+<div class="org-src-container">
+
+<pre   ><code class="shell" >docker network ls
+</code></pre>
+</div>
+
+<div class="org-src-container">
+
+<pre   ><code class="routeros" >NETWORK ID     NAME                  DRIVER    SCOPE
+88ded7088275   Eiffel-strapi         bridge    local
+9ce342a1ce54   bridge                bridge    local
+cb20fdb51056   host                  host      local
+46b699d0a4fe   network-safari_net0   bridge    local
+70d3f12412e2   none                  null      local
+</code></pre>
+</div>
+
+</section>
+<section id="slide-org83fff5b" data-background-position="right" data-background-opacity="0.2">
+<h3 id="org83fff5b">protocols</h3>
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-left" />
+
+<col  class="org-left" />
+</colgroup>
+<tbody>
+<tr>
+<td class="org-left">UDP</td>
+<td class="org-left">connectionless, lossy</td>
+</tr>
+
+<tr>
+<td class="org-left">TCP</td>
+<td class="org-left">connection-oriented, congestion-controlled, reliable</td>
+</tr>
+
+<tr>
+<td class="org-left">ICMP</td>
+<td class="org-left">control protocol, more important for ipv6 (ping uses this)</td>
+</tr>
+
+<tr>
+<td class="org-left">IGMP</td>
+<td class="org-left">group control protocol, used for multicast</td>
+</tr>
+
+<tr>
+<td class="org-left">DHCP</td>
+<td class="org-left">host configuration protocol - dynamic IP, routes etc.</td>
+</tr>
+
+<tr>
+<td class="org-left">NTP</td>
+<td class="org-left">Network time protocol</td>
+</tr>
+</tbody>
+</table>
+
+</section>
+<section id="slide-org83fff5b-split" data-background-position="right" data-background-opacity="0.2">
+
+<h3>protocols</h3>
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-left" />
+
+<col  class="org-left" />
+</colgroup>
+<tbody>
+<tr>
+<td class="org-left">HTTP(S)</td>
+<td class="org-left">Old faithful (TCP, TLS)</td>
+</tr>
+
+<tr>
+<td class="org-left">QUIC (colloquially TCP/2)</td>
+<td class="org-left">low latency, multiplexed, error-corrected, reliable, UDP/TLS based</td>
+</tr>
+
+<tr>
+<td class="org-left">HTTP/3</td>
+<td class="org-left">HTTP over QUIC</td>
+</tr>
+</tbody>
+</table>
+
+
+</section>
+<section id="slide-org6a692f9" data-background="./img/dependency.png" data-background-size="800px" data-background-position="right" data-background-opacity="0.2">
+<h4 id="org6a692f9">DHCP - Dynamic Host Configuration Protocol</h4>
+<ul>
+<li>IP address leases</li>
+<li>Gateways</li>
+<li>Hostname</li>
+<li>Domain name</li>
+<li>Domain name server</li>
+<li>Domain search lists</li>
+<li>Static Routes</li>
+<li>Time Servers</li>
+<li>Time Zone</li>
 
 </ul>
 
 </section>
-<section id="slide-orge232750-split" data-background="./img/terminology.jpg" data-background-size="800px" data-background-position="right" data-background-opacity="0.2">
-
-<h2>Terminology</h2>
+<section id="slide-org81c492c" data-background-position="right" data-background-opacity="0.2">
+<h3 id="org81c492c">Miscellaneous</h3>
 <ul>
-<li>protocols</li>
-
-</ul>
-</section>
-<section id="slide-orge232750-split" data-background="./img/terminology.jpg" data-background-size="800px" data-background-position="right" data-background-opacity="0.2">
-
-<h2>Terminology</h2>
+<li>link parameters
 <ul>
-<li>routes</li>
+<li><code>MTU</code></li>
+<li><code>QDISC</code></li>
+<li><code>QLEN</code></li>
 
-</ul>
-</section>
-<section id="slide-orge232750-split" data-background="./img/terminology.jpg" data-background-size="800px" data-background-position="right" data-background-opacity="0.2">
-
-<h2>Terminology</h2>
+</ul></li>
+<li>socket options
 <ul>
-<li>bridges</li>
-
-</ul>
-</section>
-<section id="slide-orge232750-split" data-background="./img/terminology.jpg" data-background-size="800px" data-background-position="right" data-background-opacity="0.2">
-
-<h2>Terminology</h2>
-<ul>
-<li>tun devices</li>
-
-</ul>
-</section>
-<section id="slide-orge232750-split" data-background="./img/terminology.jpg" data-background-size="800px" data-background-position="right" data-background-opacity="0.2">
-
-<h2>Terminology</h2>
-<ul>
-<li>Miscellaneous
-<ul>
-<li><code>MTU</code> <code>QDISC</code> <code>QLEN</code></li>
-<li><code>SO_LINGER</code> <code>SO_NODELAY</code></li>
+<li><code>SO_LINGER</code></li>
+<li><code>SO_NODELAY</code></li>
 
 </ul></li>
 
@@ -206,11 +519,11 @@ ip addr show [devname]
 </section>
 </section>
 <section>
-<section id="slide-org74d3d08" data-background="./img/its_always_dns.jpg" data-background-size="800px" data-background-position="right" data-background-opacity="0.2">
-<h2 id="org74d3d08">Why is it DNS?</h2>
+<section id="slide-orgc52e9d0" data-background="./img/its_always_dns.jpg" data-background-size="800px" data-background-position="right" data-background-opacity="0.2">
+<h2 id="orgc52e9d0">Why is it DNS?</h2>
 </section>
-<section id="slide-orgf1f42fb" data-background-position="right" data-background-opacity="0.2">
-<h3 id="orgf1f42fb">Hardest problems in Computer Science</h3>
+<section id="slide-orgaaf761f" data-background-position="right" data-background-opacity="0.2">
+<h3 id="orgaaf761f">Hardest problems in Computer Science</h3>
 <ul>
 <li>Naming</li>
 <li>Caching</li>
@@ -225,8 +538,8 @@ ip addr show [devname]
 </ul>
 
 </section>
-<section id="slide-org26d49ad" data-background-position="right" data-background-opacity="0.2">
-<h3 id="org26d49ad">Context</h3>
+<section id="slide-org1179b10" data-background-position="right" data-background-opacity="0.2">
+<h3 id="org1179b10">Context</h3>
 <ul>
 <li>Old Protocol (1987) - RFC1034 / RFC1035
 <ul>
@@ -239,44 +552,41 @@ ip addr show [devname]
 </ul>
 
 </section>
-<section id="slide-orgbf3095d" data-background-position="right" data-background-opacity="0.2">
-<h3 id="orgbf3095d">What is stored in DNS?</h3>
-<div class="small_code" id="org38bfa1e">
-<div class="org-src-container">
-
-<pre   ><code class="shell" >dig +nocomments any sw1nn.com | sort -r -k 1 -k 4
-</code></pre>
-</div>
+<section id="slide-orgae0cb53" data-background-position="right" data-background-opacity="0.2">
+<h3 id="orgae0cb53">What is stored in DNS?</h3>
+<pre class="example" id="org504ba5a">
+dig +nocomments any sw1nn.com | sort -r -k 1 -k 4
+</pre>
 
 <div class="org-src-container">
 
-<pre   ><code class="dns" >;; WHEN: Tue Jan 10 13:21:06 GMT 2023
+<pre   ><code class="dns" >;; WHEN: Wed Jan 18 09:52:27 GMT 2023
 ;sw1nn.com.			IN	ANY
-sw1nn.com.		813	IN	SOA	ns-895.awsdns-47.net. awsdns-hostmaster.amazon.com. 1 7200 900 1209600 86400
-sw1nn.com.		813	IN	NS	ns-895.awsdns-47.net.
-sw1nn.com.		813	IN	NS	ns-427.awsdns-53.com.
-sw1nn.com.		813	IN	NS	ns-1668.awsdns-16.co.uk.
-sw1nn.com.		813	IN	NS	ns-1409.awsdns-48.org.
-sw1nn.com.		813	IN	MX	5 alt2.aspmx.l.google.com.
-sw1nn.com.		813	IN	MX	5 alt1.aspmx.l.google.com.
-sw1nn.com.		813	IN	MX	1 aspmx.l.google.com.
-sw1nn.com.		813	IN	MX	10 alt4.aspmx.l.google.com.
-sw1nn.com.		813	IN	MX	10 alt3.aspmx.l.google.com.
-sw1nn.com.		60	IN	A	143.204.68.64
-sw1nn.com.		60	IN	A	143.204.68.6
-sw1nn.com.		60	IN	A	143.204.68.19
-sw1nn.com.		60	IN	A	143.204.68.109
-sw1nn.com.		300	IN	TXT	"v=spf1 a:gw0.sw1nn.com include:_spf.google.com -all"
-sw1nn.com.		300	IN	TXT	"keybase-site-verification=Sbl5DIqMz2YhOzwJRJ-42cuCc_5bi-IqcDgDoLI4xxY"
-sw1nn.com.		300	IN	TXT	"google-site-verification=j9z8EzWtUwDq8euHd3e6BT9zcWMh7RpGasi4ldaXqeA"
-sw1nn.com.		300	IN	CAA	0 issuewild ";"
-sw1nn.com.		300	IN	CAA	0 issue "letsencrypt.org"
-sw1nn.com.		300	IN	CAA	0 issue "awstrust.com"
-sw1nn.com.		300	IN	CAA	0 issue "amazontrust.com"
-sw1nn.com.		300	IN	CAA	0 issue "amazon.com"
-sw1nn.com.		300	IN	CAA	0 issue "amazonaws.com"
+sw1nn.com.		873	IN	SOA	ns-895.awsdns-47.net. awsdns-hostmaster.amazon.com. 1 7200 900 1209600 86400
+sw1nn.com.		873	IN	NS	ns-895.awsdns-47.net.
+sw1nn.com.		873	IN	NS	ns-427.awsdns-53.com.
+sw1nn.com.		873	IN	NS	ns-1668.awsdns-16.co.uk.
+sw1nn.com.		873	IN	NS	ns-1409.awsdns-48.org.
+sw1nn.com.		873	IN	MX	5 alt2.aspmx.l.google.com.
+sw1nn.com.		873	IN	MX	5 alt1.aspmx.l.google.com.
+sw1nn.com.		873	IN	MX	1 aspmx.l.google.com.
+sw1nn.com.		873	IN	MX	10 alt4.aspmx.l.google.com.
+sw1nn.com.		873	IN	MX	10 alt3.aspmx.l.google.com.
+sw1nn.com.		59	IN	A	143.204.68.64
+sw1nn.com.		59	IN	A	143.204.68.6
+sw1nn.com.		59	IN	A	143.204.68.19
+sw1nn.com.		59	IN	A	143.204.68.109
+sw1nn.com.		299	IN	TXT	"v=spf1 a:gw0.sw1nn.com include:_spf.google.com -all"
+sw1nn.com.		299	IN	TXT	"keybase-site-verification=Sbl5DIqMz2YhOzwJRJ-42cuCc_5bi-IqcDgDoLI4xxY"
+sw1nn.com.		299	IN	TXT	"google-site-verification=j9z8EzWtUwDq8euHd3e6BT9zcWMh7RpGasi4ldaXqeA"
+sw1nn.com.		299	IN	CAA	0 issuewild ";"
+sw1nn.com.		299	IN	CAA	0 issue "letsencrypt.org"
+sw1nn.com.		299	IN	CAA	0 issue "awstrust.com"
+sw1nn.com.		299	IN	CAA	0 issue "amazontrust.com"
+sw1nn.com.		299	IN	CAA	0 issue "amazon.com"
+sw1nn.com.		299	IN	CAA	0 issue "amazonaws.com"
 ;; SERVER: 127.0.0.53#53(127.0.0.53) (TCP)
-;; Query time: 40 msec
+;; Query time: 16 msec
 ;; MSG SIZE  rcvd: 826
 ;; global options: +cmd
 ; &lt;&lt;&gt;&gt; DiG 9.18.10 &lt;&lt;&gt;&gt; +nocomments any sw1nn.com
@@ -285,16 +595,13 @@ sw1nn.com.		300	IN	CAA	0 issue "amazonaws.com"
 </code></pre>
 </div>
 
-</div>
-
 </section>
-<section id="slide-org3057d24" data-background-position="right" data-background-opacity="0.2">
-<h3 id="org3057d24">Configuring your local DNS server</h3>
+<section id="slide-org754a28c" data-background-position="right" data-background-opacity="0.2">
+<h3 id="org754a28c">Configuring your local DNS server</h3>
 <ul>
 <li><p>
 How does your local machine resolve names?
 </p>
-<div class="small_code" id="orgb150f73">
 <div class="org-src-container">
 <label class="org-src-name">/etc/nsswitch.conf</label>
 <pre   ><code class="src" >...
@@ -303,7 +610,9 @@ hosts: mymachines mdns_minimal [NOTFOUND=return] resolve [!UNAVAIL=return] files
 
 ...
 </code></pre>
-</div>
+</div></li>
+
+</ul>
 
 
 <div class="org-src-container">
@@ -314,36 +623,32 @@ search home lan
 </code></pre>
 </div>
 
-</div>
-
 </section>
-<section id="slide-orgd90dcc4-split" data-background-position="right" data-background-opacity="0.2">
-<div class="small_code" id="orgfa1134a">
+<section id="slide-org754a28c-split" data-background-position="right" data-background-opacity="0.2">
 <div class="org-src-container">
-<label class="org-src-name">diff -uw /run/systemd/resolve/resolv.conf /run/systemd/resolve/stub-resolv.conf # (comments elided)</label>
-<pre   ><code class="diff" >--- /dev/fd/63	2023-01-10 13:21:06.305619332 +0000
-+++ /dev/fd/62	2023-01-10 13:21:06.305619332 +0000
-@@ -1,4 +1,4 @@
+<label class="org-src-name">/run/systemd/resolve/* # (comments elided)</label>
+<pre   ><code class="diff" >--- resolv.conf
++++ stub-resolv.conf
+@@ -1,6 +1,4 @@
 
+-nameserver 192.168.1.254
+-nameserver fe80::e675:dcff:fec3:6f93%3
 -nameserver 192.168.1.254
 -nameserver fe80::e675:dcff:fec3:6f93%4
 +nameserver 127.0.0.53
 +options edns0 trust-ad
- search home blandford paxton ad.corp gcp.oscaro.internal oscaro.be oscaro.com oscaro.de oscaro.es oscaro.media oscaro.pt oscaro.team oscaroad.com
+ search ad.corp gcp.oscaro.internal oscaro.be oscaro.com oscaro.de oscaro.es oscaro.media oscaro.pt oscaro.team oscaroad.com blandford paxton home
 </code></pre>
 </div>
 
-</div>
-
 </section>
-<section id="slide-orgd90dcc4-split" data-background-position="right" data-background-opacity="0.2">
+<section id="slide-org754a28c-split" data-background-position="right" data-background-opacity="0.2">
 <div class="org-src-container">
 
 <pre  id="resolvectl_status" ><code class="sh" >resolvectl status
 </code></pre>
 </div>
 
-<div class="small_code" id="org9025d34">
 <div class="org-src-container">
 
 <pre   ><code class="sh" >Global
@@ -358,9 +663,11 @@ Current Scopes: none
      Protocols: -DefaultRoute +LLMNR -mDNS -DNSOverTLS DNSSEC=no/unsupported
 
 Link 3 (enp88s0)
-Current Scopes: none
-     Protocols: -DefaultRoute +LLMNR -mDNS -DNSOverTLS DNSSEC=no/unsupported
-    DNS Domain: blandford paxton
+    Current Scopes: DNS LLMNR/IPv4 LLMNR/IPv6
+         Protocols: +DefaultRoute +LLMNR -mDNS -DNSOverTLS DNSSEC=no/unsupported
+Current DNS Server: 192.168.1.254
+       DNS Servers: 192.168.1.254 fe80::e675:dcff:fec3:6f93
+        DNS Domain: blandford home paxton
 
 Link 4 (wlo1)
     Current Scopes: DNS LLMNR/IPv4 LLMNR/IPv6
@@ -369,93 +676,150 @@ Current DNS Server: 192.168.1.254
        DNS Servers: 192.168.1.254 fe80::e675:dcff:fec3:6f93
         DNS Domain: home
 
-Link 6 (br-838b7f23bb93)
-Current Scopes: none
-     Protocols: -DefaultRoute +LLMNR -mDNS -DNSOverTLS DNSSEC=no/unsupported
-
-Link 7 (br-88ded7088275)
-Current Scopes: none
-     Protocols: -DefaultRoute +LLMNR -mDNS -DNSOverTLS DNSSEC=no/unsupported
-
-Link 8 (docker0)
-Current Scopes: none
-     Protocols: -DefaultRoute +LLMNR -mDNS -DNSOverTLS DNSSEC=no/unsupported
-
-Link 10 (tun0)
+Link 5 (tun0)
     Current Scopes: DNS
          Protocols: -DefaultRoute -LLMNR -mDNS -DNSOverTLS DNSSEC=no/unsupported
 Current DNS Server: 172.16.144.29
        DNS Servers: 172.16.144.29 172.16.144.30
         DNS Domain: ad.corp gcp.oscaro.internal oscaro.be oscaro.com oscaro.de
                     oscaro.es oscaro.media oscaro.pt oscaro.team oscaroad.com
+
+Link 7 (docker0)
+Current Scopes: none
+     Protocols: -DefaultRoute +LLMNR -mDNS -DNSOverTLS DNSSEC=no/unsupported
+
+Link 8 (br-88ded7088275)
+Current Scopes: none
+     Protocols: -DefaultRoute +LLMNR -mDNS -DNSOverTLS DNSSEC=no/unsupported
+
+Link 108 (br-46b699d0a4fe)
+Current Scopes: LLMNR/IPv4 LLMNR/IPv6
+     Protocols: -DefaultRoute +LLMNR -mDNS -DNSOverTLS DNSSEC=no/unsupported
+
+Link 164 (vethe3eeb7e)
+Current Scopes: LLMNR/IPv6
+     Protocols: -DefaultRoute +LLMNR -mDNS -DNSOverTLS DNSSEC=no/unsupported
+
+Link 166 (veth54de390)
+Current Scopes: LLMNR/IPv6
+     Protocols: -DefaultRoute +LLMNR -mDNS -DNSOverTLS DNSSEC=no/unsupported
+
+Link 168 (veth6dc6f4b)
+Current Scopes: LLMNR/IPv6
+     Protocols: -DefaultRoute +LLMNR -mDNS -DNSOverTLS DNSSEC=no/unsupported
+
+Link 170 (veth1be5265)
+Current Scopes: LLMNR/IPv6
+     Protocols: -DefaultRoute +LLMNR -mDNS -DNSOverTLS DNSSEC=no/unsupported
 </code></pre>
 </div>
 
-</div>
 </section>
-<section id="slide-orgd90dcc4-split" data-background-position="right" data-background-opacity="0.2">
-<div class="DIV" id="orgdf006cb">
-<p>
-<code>multicast DNS</code>
-</p>
+<section id="slide-org8a32cca" data-background-position="right" data-background-opacity="0.2">
+<h3 id="org8a32cca"><code>multicast DNS</code> (mDNS) / <code>Link Local Multicast Name Resolution</code> (<code>LLMNR</code>)</h3>
+<ul>
+<li>serverless name resolution</li>
+<li>implemented by Bonjour (Apple), avahi (linux)</li>
+<li>local network only (by default)</li>
+<li>Packet containing query sent to multicast address 224.0.0.251 (UDP 5353)</li>
+<li>Often used with DNS-DS (DNS service Discovery) for 'zeroconf'
+discovery (e.g. this is how your phone finds local printers)</li>
+<li>NetBIOS roughly analogous in windows, but MS moving to mDNS</li>
 
-</div></li>
+</ul>
+
+
+</section>
+</section>
+<section>
+<section id="slide-org152d132" data-background-position="right" data-background-opacity="0.2">
+<h2 id="org152d132">Packet Capture FTW</h2>
+
+<div id="org48b1d7b" class="figure">
+<p><img src="img/network-diagram.png" alt="network-diagram.png" />
+</p>
+</div>
+
+</section>
+</section>
+<section>
+<section id="slide-org91c99d1" data-background-position="right" data-background-opacity="0.2">
+<h2 id="org91c99d1">{ip,ip6,arp,eb}tables</h2>
+<ul>
+<li>Allows manipulation of packets passing through a network interface.
+<ul>
+<li>firewalling - block unwanted packets</li>
+<li>NAT - translate 'connections' from a subnet to another subnet
+(typically from a private subnet to a public one). Maintains state
+to allow response packets to be reverse translated.</li>
+<li>packet mangling - Change characteristics of packets on the fly
+<ul>
+<li>change ports</li>
+<li>change addresses</li>
+<li>change flags</li>
+
+</ul></li>
+
+</ul></li>
+<li>nftables replaces iptables et al., although iptables is still in wide use.</li>
 
 </ul>
 
 </section>
 </section>
 <section>
-<section id="slide-org6f10e63" data-background-position="right" data-background-opacity="0.2">
-<h2 id="org6f10e63">graph</h2>
-
-<div id="org6e4befa" class="figure">
-<p><img src="img/graph.svg" alt="graph.svg" class="org-svg" />
+<section id="slide-org2dc7ae5" data-background-position="right" data-background-opacity="0.2">
+<h2 id="org2dc7ae5">Cloud</h2>
+<p>
+(AWS Specific, but other providers have comparable)
 </p>
-</div>
+
+<ul>
+<li>Same concepts apply in cloud envs, but sometimes 'off instance',
+managed by API rather than CLI</li>
+<li>VPC (Virtual Private Cloud)
+<ul>
+<li>Subnets (public/private)</li>
+<li>provide DNS, Time services</li>
+<li>Internet Gateways</li>
+<li>NAT Instances</li>
+
+</ul></li>
+
+</ul>
+</section>
+<section id="slide-org2dc7ae5-split" data-background-position="right" data-background-opacity="0.2">
+<ul>
+<li>Firewall
+<ul>
+<li>Security Groups (Stateful) / Resource Level</li>
+<li>Network ACLs (Stateless) / Subnet Level - MTU negotiation rules maybe</li>
+
+</ul></li>
+<li>DHCP option sets - custom DNS, time servers</li>
+<li>VPC Flow logs
+<ul>
+<li>Aggregated data (not as helpful for live debugging)</li>
+<li>Some 'meta' traffic not logged (e.g. AWS Instance Metadata Service, License activation etc)</li>
+
+</ul></li>
+
+</ul>
 
 
-
-<div id="org8c1d6f2" class="figure">
-<p><img src="img/ditaatest1.png" alt="ditaatest1.png" />
-</p>
-</div>
 
 </section>
 </section>
 <section>
-<section id="slide-orgd684f4a" data-background-position="right" data-background-opacity="0.2">
-<h2 id="orgd684f4a">iptables et al.</h2>
-<div class="org-src-container">
-
-<pre   ><code class="shell" >iptables -nvL
-
-</code></pre>
-</div>
-</section>
-</section>
-<section>
-<section id="slide-org43f9bed" data-background-position="right" data-background-opacity="0.2">
-<h2 id="org43f9bed">Packet Capture FTW</h2>
-
-</section>
-</section>
-<section>
-<section id="slide-org0d06378" data-background-position="right" data-background-opacity="0.2">
-<h2 id="org0d06378">Cloud</h2>
-
-</section>
-</section>
-<section>
-<section id="slide-org9692d83" data-background-position="right" data-background-opacity="0.2">
-<h2 id="org9692d83">Wrap Up</h2>
+<section id="slide-org1f8f69d" data-background-position="right" data-background-opacity="0.2">
+<h2 id="org1f8f69d">Wrap Up</h2>
 <ul>
 <li><p>
 <a href="https://github.com/sw1nn/network-safari">github.com/sw1nn/network-safari</a>
 </p>
 
 
-<div id="org829fdb0" class="figure">
+<div id="orga5c8f7a" class="figure">
 <p><img src="./img/repo-qr.png" alt="repo-qr.png" />
 </p>
 </div></li>
@@ -466,7 +830,6 @@ Current DNS Server: 172.16.144.29
 </div>
 </div>
 <script src="./reveal.js/dist/reveal.js"></script>
-<script src="./reveal.js/plugin/notes/notes.js"></script>
 <script src="./reveal.js/plugin/highlight/highlight.js"></script>
 
 
@@ -474,8 +837,8 @@ Current DNS Server: 172.16.144.29
 // Full list of configuration options available here:
 // https://github.com/hakimel/reveal.js#configuration
 Reveal.initialize({
-plugins: [RevealNotes, RevealHighlight],
-slideNumber:true
+plugins: [RevealHighlight],
+width:1500, slideNumber:true, controlsLayout: 'edges'
 });
 
 </script>
