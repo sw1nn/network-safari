@@ -2,7 +2,7 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 from http.client import HTTPConnection
 import socket
 import threading
-import os
+import os,sys
 
 
 def delayed_GET(host, path):
@@ -12,6 +12,8 @@ def delayed_GET(host, path):
         c.request("GET", path)
         r = c.getresponse()
         print(r.status, r.reason)
+   except socket.gaierror:
+       print(f"Error resolving {host}", file=sys.stderr)
    finally:
        c.close()
 
