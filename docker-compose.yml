@@ -8,7 +8,7 @@ services:
       - dnsmasq
       - "-d"
     volumes:
-      - ./dnsmasq.conf:/etc/dnsmasq.conf
+      - ./etc/dnsmasq.conf:/etc/dnsmasq.conf
       - ./hosts.d:/etc/dnsmasq/hosts.d
     networks:
       net0:
@@ -17,7 +17,7 @@ services:
     image: simple-server
     hostname: host1.safari
     volumes:
-      - ./resolv.conf:/etc/resolv.conf
+      - ./etc/resolv.conf:/etc/resolv.conf
     ports:
       - 8101:80
     dns:
@@ -30,7 +30,7 @@ services:
     image: simple-server
     hostname: host2.safari
     volumes:
-      - ./resolv.conf:/etc/resolv.conf
+      - ./etc/resolv.conf:/etc/resolv.conf
     ports:
       - 8102:80
     dns:
@@ -43,7 +43,7 @@ services:
     image: simple-server 
     hostname: host3.safari
     volumes:
-      - ./resolv.conf:/etc/resolv.conf
+      - ./etc/resolv.conf:/etc/resolv.conf
     ports:
       - 8103:80
     dns:
