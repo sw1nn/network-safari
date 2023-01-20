@@ -25,20 +25,20 @@
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents" role="doc-toc">
 <ul>
-<li><a href="#/slide-org2e80927">Prerequisites</a></li>
-<li><a href="#/slide-org8e526e7">Terminology</a></li>
-<li><a href="#/slide-org3f05054">Why is it DNS?</a></li>
-<li><a href="#/slide-orga24864e">Packet Capture FTW</a></li>
-<li><a href="#/slide-org1c1f5f2">{ip,ip6,arp,eb}tables</a></li>
-<li><a href="#/slide-orgef56bfa">Cloud</a></li>
+<li><a href="#/slide-org06dccc5">Prerequisites</a></li>
+<li><a href="#/slide-orge281c74">Terminology</a></li>
+<li><a href="#/slide-org4b4797d">Why is it DNS?</a></li>
+<li><a href="#/slide-org89fac21">Packet Capture FTW</a></li>
+<li><a href="#/slide-orgc07e7e2">{ip,ip6,arp,eb}tables</a></li>
+<li><a href="#/slide-org700bca2">Cloud</a></li>
 </ul>
 </div>
 </div>
 </section>
 
 <section>
-<section id="slide-org2e80927" data-background-position="right" data-background-opacity="0.2">
-<h2 id="org2e80927">Prerequisites</h2>
+<section id="slide-org06dccc5" data-background-position="right" data-background-opacity="0.2">
+<h2 id="org06dccc5">Prerequisites</h2>
 <ul>
 <li><code>net-tools</code> package has been deprecated for over 10 years.
 <ul>
@@ -51,7 +51,7 @@
 
 </ul>
 </section>
-<section id="slide-org2e80927-split" data-background-position="right" data-background-opacity="0.2">
+<section id="slide-org06dccc5-split" data-background-position="right" data-background-opacity="0.2">
 
 <h2>Prerequisites</h2>
 <ul>
@@ -65,7 +65,7 @@
 
 </ul>
 </section>
-<section id="slide-org2e80927-split" data-background-position="right" data-background-opacity="0.2">
+<section id="slide-org06dccc5-split" data-background-position="right" data-background-opacity="0.2">
 
 <h2>Prerequisites</h2>
 <ul>
@@ -80,14 +80,14 @@
 </section>
 </section>
 <section>
-<section id="slide-org8e526e7" data-background="./img/terminology.jpg" data-background-size="800px" data-background-position="right" data-background-opacity="0.2">
-<h2 id="org8e526e7">Terminology</h2>
+<section id="slide-orge281c74" data-background="./img/terminology.jpg" data-background-size="800px" data-background-position="right" data-background-opacity="0.2">
+<h2 id="orge281c74">Terminology</h2>
 </section>
-<section id="slide-org2261ed3" data-background-position="right" data-background-opacity="0.2">
-<h3 id="org2261ed3"><code>ip link</code></h3>
-<div class="r-stack ip_link" id="orgac1ca9c">
-<div data-fragment-index="1" class="fragment fade-in-then-out link1" id="org4924b49">
-<pre class="example" id="org9cabfeb">
+<section id="slide-orgf958c21" data-background-position="right" data-background-opacity="0.2">
+<h3 id="orgf958c21"><code>ip link</code></h3>
+<div class="r-stack ip_link" id="org43ca6ec">
+<div data-fragment-index="1" class="fragment fade-in-then-out link1" id="orgfa0e11b">
+<pre class="example" id="orge44c139">
 ip link show
 </pre>
 
@@ -115,8 +115,8 @@ various interfaces, with different properties
 
 </div>
 
-<div data-fragment-index="2" class="fragment fade-in-then-out link2" id="org8e10835">
-<pre class="example" id="org3b9edea">
+<div data-fragment-index="2" class="fragment fade-in-then-out link2" id="org5be7428">
+<pre class="example" id="org8f66d7a">
 ip link show #when docker running
 </pre>
 <aside class="notes">
@@ -150,7 +150,7 @@ running docker brings in some new interfaces, including bridges
 
 </div>
 
-<div data-fragment-index="3" class="fragment appear link3" id="org053c49d">
+<div data-fragment-index="3" class="fragment appear link3" id="org00b3a0c">
 <div class="org-src-container">
 
 <pre   ><code class="shell" >ip --pretty --json link show enp88s0 # also see --details flag
@@ -187,10 +187,10 @@ json output good for parsing, but also handy for labelling unfamiliar fields
 </div>
 
 </section>
-<section id="slide-orga8a0fee" data-background-position="right" data-background-opacity="0.2">
-<h3 id="orga8a0fee"><code>ip addr show [devname]</code></h3>
-<div class="r-stack ip_addr" id="org6d8d292">
-<div data-fragment-index="1" class="fragment fade-in-then-out wlo1" id="orga0854b3">
+<section id="slide-org0e425b3" data-background-position="right" data-background-opacity="0.2">
+<h3 id="org0e425b3"><code>ip addr show [devname]</code></h3>
+<div class="r-stack ip_addr" id="orgd3da688">
+<div data-fragment-index="1" class="fragment fade-in-then-out wlo1" id="orgb18ea20">
 <div class="org-src-container">
 
 <pre   ><code class="shell" >ip addr show dev wlo1
@@ -203,9 +203,9 @@ json output good for parsing, but also handy for labelling unfamiliar fields
     link/ether 84:7b:57:20:f9:54 brd ff:ff:ff:ff:ff:ff
     altname wlp0s20f3
     inet 192.168.1.177/24 metric 1024 brd 192.168.1.255 scope global dynamic wlo1
-       valid_lft 63806sec preferred_lft 63806sec
+       valid_lft 62503sec preferred_lft 62503sec
     inet6 2a00:23c7:621c:f201:867b:57ff:fe20:f954/64 scope global dynamic mngtmpaddr noprefixroute 
-       valid_lft 276sec preferred_lft 96sec
+       valid_lft 283sec preferred_lft 103sec
     inet6 fe80::867b:57ff:fe20:f954/64 scope link 
        valid_lft forever preferred_lft forever
 </code></pre>
@@ -225,7 +225,7 @@ point out
 
 </div>
 
-<div data-fragment-index="2" class="fragment fade-in-then-out tun0" id="orge42a3ff">
+<div data-fragment-index="2" class="fragment fade-in-then-out tun0" id="org2d1ab5b">
 <p>
 
 </p>
@@ -238,11 +238,11 @@ point out
 
 <div class="org-src-container">
 
-<pre   ><code class="routeros" >5: tun0: &lt;POINTOPOINT,MULTICAST,NOARP,UP,LOWER_UP&gt; mtu 1500 qdisc fq_codel state UNKNOWN group default qlen 500
+<pre   ><code class="routeros" >236: tun0: &lt;POINTOPOINT,MULTICAST,NOARP,UP,LOWER_UP&gt; mtu 1500 qdisc fq_codel state UNKNOWN group default qlen 500
     link/none 
-    inet 172.16.146.116/26 brd 172.16.146.127 scope global tun0
+    inet 172.16.146.115/26 brd 172.16.146.127 scope global tun0
        valid_lft forever preferred_lft forever
-    inet6 fe80::a9bc:8cdc:23b7:7607/64 scope link stable-privacy 
+    inet6 fe80::8237:66bb:f0d5:c72b/64 scope link stable-privacy 
        valid_lft forever preferred_lft forever
 </code></pre>
 </div>
@@ -255,7 +255,7 @@ first VPN i/f - qdisc, mtu
 
 </div>
 
-<div data-fragment-index="3" class="fragment fade-in-then-out wg0" id="orgf02e38f">
+<div data-fragment-index="3" class="fragment fade-in-then-out wg0" id="orge41d3ba">
 <div class="org-src-container">
 
 <pre   ><code class="shell" >ip addr show dev wg0
@@ -280,7 +280,7 @@ qdisc
 
 </div>
 
-<div data-fragment-index="4" class="fragment fade-in-then-out enp88s0" id="org2d039f9">
+<div data-fragment-index="4" class="fragment fade-in-then-out enp88s0" id="orgcc1f327">
 <div class="org-src-container">
 
 <pre   ><code class="shell" >ip addr show dev enp88s0
@@ -292,9 +292,9 @@ qdisc
 <pre   ><code class="routeros" >3: enp88s0: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc mq state UP group default qlen 1000
     link/ether 48:21:0b:36:d3:08 brd ff:ff:ff:ff:ff:ff
     inet 192.168.1.99/24 metric 512 brd 192.168.1.255 scope global dynamic enp88s0
-       valid_lft 63697sec preferred_lft 63697sec
+       valid_lft 61730sec preferred_lft 61730sec
     inet6 2a00:23c7:621c:f201:4a21:bff:fe36:d308/64 scope global dynamic mngtmpaddr noprefixroute 
-       valid_lft 275sec preferred_lft 95sec
+       valid_lft 283sec preferred_lft 103sec
     inet6 fe80::4a21:bff:fe36:d308/64 scope link 
        valid_lft forever preferred_lft forever
 </code></pre>
@@ -309,7 +309,7 @@ metric
 
 </div>
 
-<div data-fragment-index="5" class="fragment appear sipcalc" id="org8c7adf1">
+<div data-fragment-index="5" class="fragment appear sipcalc" id="org023afbb">
 <div class="org-src-container">
 
 <pre   ><code class="shell" >sipcalc 172.16.146.116/26
@@ -349,14 +349,14 @@ sipcalc - good for working with CIDRs
 </div>
 
 </section>
-<section id="slide-org4a3a574" data-background-position="right" data-background-opacity="0.2">
-<h3 id="org4a3a574">ip route</h3>
-<div class="r-stack ip_route" id="org0bcab9a">
+<section id="slide-orgcc8d885" data-background-position="right" data-background-opacity="0.2">
+<h3 id="orgcc8d885">ip route</h3>
+<div class="r-stack ip_route" id="org1693aef">
 <p>
 
 </p>
 
-<div data-fragment-index="1" class="fragment fade-in-then-out route1" id="orgdfddfe4">
+<div data-fragment-index="1" class="fragment fade-in-then-out route1" id="org64fae74">
 <div class="org-src-container">
 
 <pre   ><code class="sh" >ip route show | grep -v tun0
@@ -368,7 +368,7 @@ sipcalc - good for working with CIDRs
 <pre   ><code class="routeros" >default via 192.168.1.254 dev enp88s0 proto dhcp src 192.168.1.99 metric 512 
 default via 192.168.1.254 dev wlo1 proto dhcp src 192.168.1.177 metric 1024 
 10.9.0.0/24 dev wg0 proto kernel scope link src 10.9.0.7 metric 512 
-10.42.10.0/24 dev br-f7bb630ee55f proto kernel scope link src 10.42.10.1 
+10.42.10.0/24 dev br-f7bb630ee55f proto kernel scope link src 10.42.10.1 linkdown 
 172.18.0.0/16 dev br-88ded7088275 proto kernel scope link src 172.18.0.1 linkdown 
 172.26.0.0/24 dev docker0 proto kernel scope link src 172.26.0.1 linkdown 
 192.168.1.0/24 dev enp88s0 proto kernel scope link src 192.168.1.99 metric 512 
@@ -392,7 +392,7 @@ filtering tun0 - cos
 
 </div>
 
-<div data-fragment-index="2" class="fragment appear route2" id="org7defd14">
+<div data-fragment-index="2" class="fragment appear route2" id="orgdf12ddc">
 <div class="org-src-container">
 
 <pre   ><code class="sh" >routel | grep -v tun0
@@ -442,8 +442,8 @@ different format
 </div>
 
 </section>
-<section id="slide-org26c7033" data-background-position="right" data-background-opacity="0.2">
-<h3 id="org26c7033">bridges</h3>
+<section id="slide-orgb60fd94" data-background-position="right" data-background-opacity="0.2">
+<h3 id="orgb60fd94">bridges</h3>
 <div class="org-src-container">
 
 <pre   ><code class="sh" >ip link show type bridge
@@ -456,7 +456,7 @@ different format
     link/ether 02:42:55:a7:03:b0 brd ff:ff:ff:ff:ff:ff
 8: br-88ded7088275: &lt;NO-CARRIER,BROADCAST,MULTICAST,UP&gt; mtu 1500 qdisc noqueue state DOWN mode DEFAULT group default 
     link/ether 02:42:8b:26:25:07 brd ff:ff:ff:ff:ff:ff
-227: br-f7bb630ee55f: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc noqueue state UP mode DEFAULT group default 
+227: br-f7bb630ee55f: &lt;NO-CARRIER,BROADCAST,MULTICAST,UP&gt; mtu 1500 qdisc noqueue state DOWN mode DEFAULT group default 
     link/ether 02:42:e6:a4:c6:9e brd ff:ff:ff:ff:ff:ff
 </code></pre>
 </div>
@@ -485,8 +485,8 @@ k8s extends this with flannel - virtual network across multiple nodes
 
 </aside>
 </section>
-<section id="slide-org532a33c" data-background-position="right" data-background-opacity="0.2">
-<h3 id="org532a33c">protocols</h3>
+<section id="slide-orgb475062" data-background-position="right" data-background-opacity="0.2">
+<h3 id="orgb475062">protocols</h3>
 <table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
 
 
@@ -534,7 +534,7 @@ network layer protocols
 
 </aside>
 </section>
-<section id="slide-org532a33c-split" data-background-position="right" data-background-opacity="0.2">
+<section id="slide-orgb475062-split" data-background-position="right" data-background-opacity="0.2">
 
 <h3>protocols</h3>
 <table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
@@ -570,8 +570,8 @@ application layer protocols
 </aside>
 
 </section>
-<section id="slide-org5cbe8fb" data-background-position="right" data-background-opacity="0.2">
-<h4 id="org5cbe8fb">DHCP - Dynamic Host Configuration Protocol</h4>
+<section id="slide-org070a570" data-background-position="right" data-background-opacity="0.2">
+<h4 id="org070a570">DHCP - Dynamic Host Configuration Protocol</h4>
 <ul>
 <li>IP address leases</li>
 <li>Gateways</li>
@@ -591,8 +591,8 @@ dhcp, dns, servers often 'complected' - dnsmasq
 
 </aside>
 </section>
-<section id="slide-orgf5dccce" data-background="./img/dependency.png" data-background-size="800px" data-background-position="right" data-background-opacity="0.2">
-<h3 id="orgf5dccce">Time</h3>
+<section id="slide-org8999cb6" data-background="./img/dependency.png" data-background-size="800px" data-background-position="right" data-background-opacity="0.2">
+<h3 id="org8999cb6">Time</h3>
 <ul>
 <li>Anything crypto is sensitive to times (certificate validity checks)</li>
 <li>Network changes (i.e. starting and stopping VPNs or docker
@@ -609,11 +609,11 @@ containers) can trigger time server changes</li>
 
 </aside>
 </section>
-<section id="slide-orgf5dccce-split" data-background="./img/dependency.png" data-background-size="800px" data-background-position="right" data-background-opacity="0.2">
+<section id="slide-org8999cb6-split" data-background="./img/dependency.png" data-background-size="800px" data-background-position="right" data-background-opacity="0.2">
 
 <h3>Time</h3>
-<div class="r-stack time" id="org8d71c46">
-<div data-fragment-index="1" class="fragment fade-in-then-out timedatectl" id="orgf76c139">
+<div class="r-stack time" id="org0d20276">
+<div data-fragment-index="1" class="fragment fade-in-then-out timedatectl" id="orge349193">
 <div class="org-src-container">
 
 <pre   ><code class="sh" >timedatectl
@@ -622,9 +622,9 @@ containers) can trigger time server changes</li>
 
 <div class="org-src-container">
 
-<pre   ><code class="shell" >               Local time: Wed 2023-01-18 15:11:25 GMT
-           Universal time: Wed 2023-01-18 15:11:25 UTC
-                 RTC time: Wed 2023-01-18 15:11:25
+<pre   ><code class="shell" >               Local time: Fri 2023-01-20 11:23:43 GMT
+           Universal time: Fri 2023-01-20 11:23:43 UTC
+                 RTC time: Fri 2023-01-20 11:23:43
                 Time zone: Europe/London (GMT, +0000)
 System clock synchronized: yes
               NTP service: active
@@ -634,7 +634,7 @@ System clock synchronized: yes
 
 </div>
 
-<div data-fragment-index="2" class="fragment appear timesyncd" id="org4205ee5">
+<div data-fragment-index="2" class="fragment appear timesyncd" id="org8d19caf">
 <div class="org-src-container">
 
 <pre   ><code class="sh" >systemctl status systemd-timesyncd
@@ -645,26 +645,26 @@ System clock synchronized: yes
 
 <pre   ><code class="shell" >● systemd-timesyncd.service - Network Time Synchronization
      Loaded: loaded (/usr/lib/systemd/system/systemd-timesyncd.service; enabled; preset: enabled)
-     Active: active (running) since Tue 2023-01-17 09:41:16 GMT; 1 day 5h ago
+     Active: active (running) since Tue 2023-01-17 09:41:16 GMT; 3 days ago
        Docs: man:systemd-timesyncd.service(8)
    Main PID: 590 (systemd-timesyn)
      Status: "Contacted time server [2a0d:5440::24]:123 (2.arch.pool.ntp.org)."
       Tasks: 4 (limit: 18749)
-     Memory: 1.9M
-        CPU: 905ms
+     Memory: 1.4M
+        CPU: 1.607s
      CGroup: /system.slice/systemd-timesyncd.service
              └─590 /usr/lib/systemd/systemd-timesyncd
 
-Jan 18 14:26:10 jurgen systemd-timesyncd[590]: Network configuration changed, trying to establish connection.
-Jan 18 14:26:10 jurgen systemd-timesyncd[590]: Contacted time server [2a0d:5440::24]:123 (2.arch.pool.ntp.org).
-Jan 18 14:56:56 jurgen systemd-timesyncd[590]: Network configuration changed, trying to establish connection.
-Jan 18 14:56:56 jurgen systemd-timesyncd[590]: Contacted time server [2a0d:5440::24]:123 (2.arch.pool.ntp.org).
-Jan 18 14:57:23 jurgen systemd-timesyncd[590]: Network configuration changed, trying to establish connection.
-Jan 18 14:57:24 jurgen systemd-timesyncd[590]: Contacted time server [2a0d:5440::24]:123 (2.arch.pool.ntp.org).
-Jan 18 15:00:34 jurgen systemd-timesyncd[590]: Network configuration changed, trying to establish connection.
-Jan 18 15:00:34 jurgen systemd-timesyncd[590]: Contacted time server [2a0d:5440::24]:123 (2.arch.pool.ntp.org).
-Jan 18 15:00:47 jurgen systemd-timesyncd[590]: Network configuration changed, trying to establish connection.
-Jan 18 15:00:47 jurgen systemd-timesyncd[590]: Contacted time server [2a0d:5440::24]:123 (2.arch.pool.ntp.org).
+Jan 20 09:04:35 jurgen systemd-timesyncd[590]: Network configuration changed, trying to establish connection.
+Jan 20 09:04:35 jurgen systemd-timesyncd[590]: Contacted time server [2a0d:5440::24]:123 (2.arch.pool.ntp.org).
+Jan 20 10:33:05 jurgen systemd-timesyncd[590]: Network configuration changed, trying to establish connection.
+Jan 20 10:33:05 jurgen systemd-timesyncd[590]: Contacted time server [2a0d:5440::24]:123 (2.arch.pool.ntp.org).
+Jan 20 10:33:19 jurgen systemd-timesyncd[590]: Network configuration changed, trying to establish connection.
+Jan 20 10:33:19 jurgen systemd-timesyncd[590]: Contacted time server [2a0d:5440::24]:123 (2.arch.pool.ntp.org).
+Jan 20 11:12:04 jurgen systemd-timesyncd[590]: Network configuration changed, trying to establish connection.
+Jan 20 11:12:04 jurgen systemd-timesyncd[590]: Contacted time server [2a0d:5440::24]:123 (2.arch.pool.ntp.org).
+Jan 20 11:12:05 jurgen systemd-timesyncd[590]: Network configuration changed, trying to establish connection.
+Jan 20 11:12:05 jurgen systemd-timesyncd[590]: Contacted time server [2a0d:5440::24]:123 (2.arch.pool.ntp.org).
 </code></pre>
 </div>
 
@@ -672,8 +672,8 @@ Jan 18 15:00:47 jurgen systemd-timesyncd[590]: Contacted time server [2a0d:5440:
 
 </div>
 </section>
-<section id="slide-org44e0697" data-background-position="right" data-background-opacity="0.2">
-<h3 id="org44e0697">Miscellaneous</h3>
+<section id="slide-orge9c7aac" data-background-position="right" data-background-opacity="0.2">
+<h3 id="orge9c7aac">Miscellaneous</h3>
 <ul>
 <li>link parameters
 <ul>
@@ -700,11 +700,11 @@ QDISC / QLEN - if your app is stressed the network i/f can behave differently
 </section>
 </section>
 <section>
-<section id="slide-org3f05054" data-background="./img/its_always_dns.jpg" data-background-size="800px" data-background-position="right" data-background-opacity="0.2">
-<h2 id="org3f05054">Why is it DNS?</h2>
+<section id="slide-org4b4797d" data-background="./img/its_always_dns.jpg" data-background-size="800px" data-background-position="right" data-background-opacity="0.2">
+<h2 id="org4b4797d">Why is it DNS?</h2>
 </section>
-<section id="slide-org6e8c156" data-background-position="right" data-background-opacity="0.2">
-<h3 id="org6e8c156">Hardest problems in Computer Science</h3>
+<section id="slide-orgb494b10" data-background-position="right" data-background-opacity="0.2">
+<h3 id="orgb494b10">Hardest problems in Computer Science</h3>
 <ul>
 <li>Naming</li>
 <li>Caching</li>
@@ -719,8 +719,8 @@ QDISC / QLEN - if your app is stressed the network i/f can behave differently
 </ul>
 
 </section>
-<section id="slide-org116b8a4" data-background-position="right" data-background-opacity="0.2">
-<h3 id="org116b8a4">Context</h3>
+<section id="slide-org092d239" data-background-position="right" data-background-opacity="0.2">
+<h3 id="org092d239">Context</h3>
 <ul>
 <li>Old Protocol (1987) - RFC1034 / RFC1035
 <ul>
@@ -739,9 +739,9 @@ QDISC / QLEN - if your app is stressed the network i/f can behave differently
 </aside>
 
 </section>
-<section id="slide-orgc793b95" data-background-position="right" data-background-opacity="0.2">
-<h3 id="orgc793b95">What is stored in DNS?</h3>
-<pre class="example" id="org8397a78">
+<section id="slide-orgf7ee7b6" data-background-position="right" data-background-opacity="0.2">
+<h3 id="orgf7ee7b6">What is stored in DNS?</h3>
+<pre class="example" id="org503a9c1">
 dig +nocomments any sw1nn.com | sort -r -k 1 -k 4
 </pre>
 
@@ -789,8 +789,8 @@ PTR records - often difficult to set up because you don't 'own' the netrange. (a
 </aside>
 
 </section>
-<section id="slide-org640aacb" data-background-position="right" data-background-opacity="0.2">
-<h3 id="org640aacb">Configuring your local DNS server</h3>
+<section id="slide-orgcc5099e" data-background-position="right" data-background-opacity="0.2">
+<h3 id="orgcc5099e">Configuring your local DNS server</h3>
 <ul>
 <li><p>
 How does your local machine resolve names?
@@ -822,31 +822,26 @@ search home lan
 </div>
 
 </section>
-<section id="slide-org640aacb-split" data-background-position="right" data-background-opacity="0.2">
-<div class="org-src-container">
-
-<pre   ><code class="diff" >--- resolv.conf
-+++ stub-resolv.conf
-@@ -1,6 +1,4 @@
-
--nameserver 192.168.1.254
--nameserver fe80::e675:dcff:fec3:6f93%3
--nameserver 192.168.1.254
--nameserver fe80::e675:dcff:fec3:6f93%4
-+nameserver 127.0.0.53
-+options edns0 trust-ad
- search ad.corp gcp.oscaro.internal oscaro.be oscaro.com oscaro.de oscaro.es oscaro.media oscaro.pt oscaro.team oscaroad.com blandford paxton home
-</code></pre>
-</div>
-
+<section id="slide-orgcc5099e-split" data-background-position="right" data-background-opacity="0.2">
 <aside class="notes">
 <p>
 systemd-resolved  vs resolvconf
 </p>
 
 </aside>
+
+</section>
+<section id="slide-org30c7aaf" data-background-position="right" data-background-opacity="0.2">
+<h3 id="org30c7aaf">systemd-resolved generates two files</h3>
+<ul>
+<li><code>resolv.conf</code> - passes queries direct to upstream servers</li>
+<li><code>stub-resolv.conf</code> - local cache + smarts</li>
+<li>recommend <code>stub-resolv.conf</code></li>
+
+</ul>
+
 <div class="org-src-container">
-<label class="org-src-name">/run/systemd/resolve/* # (comments elided)</label>
+<label class="org-src-name">files in /run/systemd/resolve/* # (comments elided)</label>
 <pre   ><code class="diff" >--- resolv.conf
 +++ stub-resolv.conf
 @@ -1,6 +1,4 @@
@@ -862,7 +857,7 @@ systemd-resolved  vs resolvconf
 </div>
 
 </section>
-<section id="slide-org640aacb-split" data-background-position="right" data-background-opacity="0.2">
+<section id="slide-org30c7aaf-split" data-background-position="right" data-background-opacity="0.2">
 <div class="org-src-container">
 
 <pre  id="resolvectl_status" ><code class="sh" >resolvectl status
@@ -896,14 +891,6 @@ Current DNS Server: 192.168.1.254
        DNS Servers: 192.168.1.254 fe80::e675:dcff:fec3:6f93
         DNS Domain: home
 
-Link 5 (tun0)
-    Current Scopes: DNS
-         Protocols: -DefaultRoute -LLMNR -mDNS -DNSOverTLS DNSSEC=no/unsupported
-Current DNS Server: 172.16.144.29
-       DNS Servers: 172.16.144.29 172.16.144.30
-        DNS Domain: ad.corp gcp.oscaro.internal oscaro.be oscaro.com oscaro.de
-                    oscaro.es oscaro.media oscaro.pt oscaro.team oscaroad.com
-
 Link 7 (docker0)
 Current Scopes: none
      Protocols: -DefaultRoute +LLMNR -mDNS -DNSOverTLS DNSSEC=no/unsupported
@@ -913,30 +900,22 @@ Current Scopes: none
      Protocols: -DefaultRoute +LLMNR -mDNS -DNSOverTLS DNSSEC=no/unsupported
 
 Link 227 (br-f7bb630ee55f)
-Current Scopes: LLMNR/IPv4 LLMNR/IPv6
+Current Scopes: none
      Protocols: -DefaultRoute +LLMNR -mDNS -DNSOverTLS DNSSEC=no/unsupported
 
-Link 229 (vetheedc190)
-Current Scopes: LLMNR/IPv6
-     Protocols: -DefaultRoute +LLMNR -mDNS -DNSOverTLS DNSSEC=no/unsupported
-
-Link 231 (veth2fcc6d4)
-Current Scopes: LLMNR/IPv6
-     Protocols: -DefaultRoute +LLMNR -mDNS -DNSOverTLS DNSSEC=no/unsupported
-
-Link 233 (veth6111984)
-Current Scopes: LLMNR/IPv6
-     Protocols: -DefaultRoute +LLMNR -mDNS -DNSOverTLS DNSSEC=no/unsupported
-
-Link 235 (vethc3d1c6c)
-Current Scopes: LLMNR/IPv6
-     Protocols: -DefaultRoute +LLMNR -mDNS -DNSOverTLS DNSSEC=no/unsupported
+Link 236 (tun0)
+    Current Scopes: DNS
+         Protocols: -DefaultRoute -LLMNR -mDNS -DNSOverTLS DNSSEC=no/unsupported
+Current DNS Server: 172.16.144.29
+       DNS Servers: 172.16.144.29 172.16.144.30
+        DNS Domain: ad.corp gcp.oscaro.internal oscaro.be oscaro.com oscaro.de
+                    oscaro.es oscaro.media oscaro.pt oscaro.team oscaroad.com
 </code></pre>
 </div>
 
 </section>
-<section id="slide-orgbaa8f71" data-background-position="right" data-background-opacity="0.2">
-<h3 id="orgbaa8f71"><code>multicast DNS</code> (mDNS) / <code>Link Local Multicast Name Resolution</code> (<code>LLMNR</code>)</h3>
+<section id="slide-org6197ecd" data-background-position="right" data-background-opacity="0.2">
+<h3 id="org6197ecd"><code>multicast DNS</code> (mDNS) / <code>Link Local Multicast Name Resolution</code> (<code>LLMNR</code>)</h3>
 <ul>
 <li>serverless name resolution</li>
 <li>implemented by Bonjour (Apple), avahi (linux)</li>
@@ -952,10 +931,10 @@ discovery (e.g. this is how your phone finds local printers)</li>
 </section>
 </section>
 <section>
-<section id="slide-orga24864e" data-background-position="right" data-background-opacity="0.2">
-<h2 id="orga24864e">Packet Capture FTW</h2>
+<section id="slide-org89fac21" data-background-position="right" data-background-opacity="0.2">
+<h2 id="org89fac21">Packet Capture FTW</h2>
 
-<div id="org008da91" class="figure">
+<div id="org802014b" class="figure">
 <p><img src="img/network-diagram.png" alt="network-diagram.png" />
 </p>
 </div>
@@ -969,16 +948,11 @@ discovery (e.g. this is how your phone finds local printers)</li>
 
 </aside>
 
-<div id="org0fbb98e" class="figure">
-<p><img src="img/network-diagram.png" alt="network-diagram.png" />
-</p>
-</div>
-
 </section>
 </section>
 <section>
-<section id="slide-org1c1f5f2" data-background-position="right" data-background-opacity="0.2">
-<h2 id="org1c1f5f2">{ip,ip6,arp,eb}tables</h2>
+<section id="slide-orgc07e7e2" data-background-position="right" data-background-opacity="0.2">
+<h2 id="orgc07e7e2">{ip,ip6,arp,eb}tables</h2>
 <ul>
 <li>Allows manipulation of packets passing through a network interface.
 <ul>
@@ -999,11 +973,11 @@ to allow response packets to be reverse translated.</li>
 
 </ul>
 </section>
-<section id="slide-orge15a0b0" data-background-position="right" data-background-opacity="0.2">
-<h3 id="orge15a0b0">Typical output</h3>
-<div class="r-stack packets" id="org78ef82b">
-<div data-fragment-index="1" class="fragment fade-in-then-out iptables" id="org348bd6b">
-<pre class="example" id="orge34340f">
+<section id="slide-org7df856b" data-background-position="right" data-background-opacity="0.2">
+<h3 id="org7df856b">Typical output</h3>
+<div class="r-stack packets" id="org523e3f7">
+<div data-fragment-index="1" class="fragment fade-in-then-out iptables" id="org509fb76">
+<pre class="example" id="org46c9a18">
 iptables --numeric --verbose --list # --table filter
 </pre>
 <aside class="notes">
@@ -1067,8 +1041,8 @@ Chain DOCKER-USER (1 references)
 
 </div>
 
-<div data-fragment-index="2" class="fragment fade-in-then-out nftables" id="org43a0f77">
-<pre class="example" id="orgc54df16">
+<div data-fragment-index="2" class="fragment fade-in-then-out nftables" id="orgd91e712">
+<pre class="example" id="org48a6a7e">
 nft list table filter # --json
 </pre>
 
@@ -1123,8 +1097,8 @@ nft list table filter # --json
 
 </div>
 
-<div data-fragment-index="3" class="fragment appear nat" id="orgc9d9a80">
-<pre class="example" id="org3d66ab0">
+<div data-fragment-index="3" class="fragment appear nat" id="org3b1f012">
+<pre class="example" id="orgc2dada5">
 iptables --table nat --numeric --verbose --list
 </pre>
 
@@ -1168,10 +1142,10 @@ Chain DOCKER (2 references)
 </section>
 </section>
 <section>
-<section id="slide-orgef56bfa" data-background-position="right" data-background-opacity="0.2">
-<h2 id="orgef56bfa">Cloud</h2>
+<section id="slide-org700bca2" data-background-position="right" data-background-opacity="0.2">
+<h2 id="org700bca2">Cloud</h2>
 <p>
-(AWS Specific, but other providers have comparable).
+(AWS Specific, but other providers have comparable)
 </p>
 
 <ul>
@@ -1188,7 +1162,7 @@ managed by API rather than CLI</li>
 
 </ul>
 </section>
-<section id="slide-orgef56bfa-split" data-background-position="right" data-background-opacity="0.2">
+<section id="slide-org700bca2-split" data-background-position="right" data-background-opacity="0.2">
 <ul>
 <li>Firewall
 <ul>
@@ -1211,15 +1185,15 @@ managed by API rather than CLI</li>
 </section>
 </section>
 <section>
-<section id="slide-org037dca1" data-background-position="right" data-background-opacity="0.2">
-<h2 id="org037dca1">Wrap Up</h2>
+<section id="slide-org6735355" data-background-position="right" data-background-opacity="0.2">
+<h2 id="org6735355">Wrap Up</h2>
 <ul>
 <li><p>
 <a href="https://github.com/sw1nn/network-safari">github.com/sw1nn/network-safari</a>
 </p>
 
 
-<div id="org3244062" class="figure">
+<div id="orgd22cb05" class="figure">
 <p><img src="./img/repo-qr.png" alt="repo-qr.png" />
 </p>
 </div></li>
