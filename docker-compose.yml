@@ -19,7 +19,7 @@ services:
     volumes:
       - ./etc/resolv.conf:/etc/resolv.conf
     ports:
-      - 8101:80
+      - 8101:443
     dns:
       - 10.42.10.254
     networks:
@@ -32,7 +32,7 @@ services:
     volumes:
       - ./etc/resolv.conf:/etc/resolv.conf
     ports:
-      - 8102:80
+      - 8102:443
     dns:
       - 10.42.10.254
     networks:
@@ -45,7 +45,7 @@ services:
     volumes:
       - ./etc/resolv.conf:/etc/resolv.conf
     ports:
-      - 8103:80
+      - 8103:443
     dns:
       - 10.42.10.254
     networks:

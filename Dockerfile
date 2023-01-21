@@ -1,9 +1,8 @@
 FROM python:3.11
 
-RUN apt -y update && apt -y install dnsutils iproute2 iputils-ping
+RUN apt-get -y update && apt-get -y install dnsutils iproute2 iputils-ping
 
-COPY src/simple_server.py .
-COPY serve.sh .
+COPY safari.cert safari.key src/simple_server.py serve.sh ./
 
 ENV PYTHONUNBUFFERED=1
 
